@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchWithAuth } from "@/auth/tokenservice";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { FaTrash } from "react-icons/fa"; // import at top
+import { FaTrash, FaEdit } from "react-icons/fa"; // import at top
 
 type CustomerType = {
   id: number;
@@ -166,7 +166,15 @@ export default function ProformaInvoicesPage() {
                     </span>
                   </td>
                   <td className="p-3">₹{Number(inv.total_amount).toLocaleString()}</td>
-                  <td className="p-3">
+                  <td className="p-3 flex gap-3">
+                    <Link
+    href={`/books/sales/proforma-invoice/${inv.id}/edit`}
+    className="text-blue-600 hover:text-blue-800"
+    title="Edit proforma invoice"
+    aria-label={`Edit proforma invoice ${inv.invoice_number}`}
+  >
+    <FaEdit />
+  </Link>
         <button
           onClick={() => deleteProforma(inv.id)}
           className="text-red-600 hover:text-red-800"

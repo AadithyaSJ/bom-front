@@ -4,7 +4,7 @@ import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchWithAuth } from "@/auth/tokenservice";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaEdit } from "react-icons/fa";
 
 type CustomerType = {
   id: number;
@@ -182,7 +182,15 @@ export default function QuotesPage() {
                       {q.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 flex items-center gap-4">
+                    <Link
+                      href={`/books/sales/quotes/${q.id}/edit`}
+                      className="text-blue-600 hover:text-blue-800"
+                      aria-label={`Edit quote ${q.quote_number}`}
+                      title="Edit quote"
+                    >
+                      <FaEdit size={16} />
+                    </Link>
                     <button
                       onClick={() => deleteQuote(q.id)}
                       className="text-red-600 hover:text-red-800"

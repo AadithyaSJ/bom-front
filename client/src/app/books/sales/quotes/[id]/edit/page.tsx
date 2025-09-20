@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import { useMemo, useState, useEffect, ChangeEvent } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { fetchWithAuth } from "@/auth/tokenservice";
 
-type ItemRow = { id: string; name: string; qty: number; rate: number };
+type ItemRow = { id: string; itemId?: string; name: string; qty: number; rate: number };
 
 const STORAGE_KEY = "quotes";
 
@@ -29,8 +29,38 @@ export default function EditQuotePage() {
   const [taxType, setTaxType] = useState<"TDS" | "TCS">("TDS");
   const [taxPct, setTaxPct] = useState(0);
   const [adjustment, setAdjustment] = useState(0);
+
+  // Status states for new field
+  const [status, setStatus] = useState("draft");
+  const [statusChoices, setStatusChoices] = useState<{ value: string; display: string }[]>([]);
+
+  // Items fetched for mapping itemId to item name
+  const [itemMap, setItemMap] = useState<Record<string, string>>({});
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Fetch all items once to build map of id -> name
+  useEffect(() => {
+    async function fetchItems() {
+      try {
+        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/items/");
+        if (!res.ok) throw new Error("Failed to fetch items");
+        const data = await res.json();
+        // Adjust this if your API returns paginated structure
+        const itemsArray = Array.isArray(data) ? data : data.results || [];
+        const map: Record<string, string> = {};
+        itemsArray.forEach((item: any) => {
+          map[item.id.toString()] = item.name;
+        });
+        setItemMap(map);
+      } catch (err) {
+        console.error("Error fetching items:", err);
+      }
+    }
+
+    fetchItems();
+  }, []);
 
   // Calculate totals
   const subTotal = useMemo(
@@ -69,9 +99,10 @@ export default function EditQuotePage() {
         );
         if (!res.ok) throw new Error(`Failed to fetch quote: ${res.status}`);
         const data = await res.json();
+        console.log(data);
 
         setCustomerId(data.customer?.id || null);
-        setCustomerName(data.customer?.name || "");
+        setCustomerName(data.customer?.display_name || "");
         setQuoteNumber(data.quote_number || "");
         setReference(data.reference_number || "");
         setQuoteDate(data.quote_date || "");
@@ -86,12 +117,25 @@ export default function EditQuotePage() {
         setTaxType(data.tax_type || "TDS");
         setAdjustment(Number(data.adjustment) || 0);
 
-        // Load items from nested item_details, map to your internal ItemRow format
+        // Set status and status choices from backend or fallback defaults
+        setStatus(data.status || "draft");
+        setStatusChoices(
+          data.status_choices || [
+            { value: "draft", display: "Draft" },
+            { value: "sent", display: "Sent" },
+            { value: "accepted", display: "Accepted" },
+            { value: "rejected", display: "Rejected" },
+            { value: "expired", display: "Expired" },
+          ]
+        );
+
+        // Map item details using itemMap for name
         if (Array.isArray(data.item_details) && data.item_details.length > 0) {
           setItems(
             data.item_details.map((item: any) => ({
               id: item.id?.toString() || crypto.randomUUID(),
-              name: item.item?.name || "",
+              itemId: item.item_id?.toString() || undefined,
+              name: itemMap[item.item_id?.toString() || ""] || "",
               qty: item.quantity || 1,
               rate: Number(item.rate) || 0,
             }))
@@ -106,7 +150,7 @@ export default function EditQuotePage() {
       }
     }
     fetchQuote();
-  }, [id]);
+  }, [id, itemMap]);
 
   const addRow = () =>
     setItems((rows) => [...rows, { id: crypto.randomUUID(), name: "", qty: 1, rate: 0 }]);
@@ -147,10 +191,10 @@ export default function EditQuotePage() {
       tax_type: taxType,
       tax_percentage: taxPct,
       adjustment,
+      status, // include the status field here
       item_details: items.map((i) => ({
-        // Note: Item ID might be handled separately; use existing or null for new
-        // Assume backend expects: item ID, quantity, rate and amount computed server-side
-        item: null, // You may need to select item properly or pass ID
+        // Use itemId in item field to map correctly
+        item_id: i.itemId || null,
         quantity: i.qty,
         rate: i.rate,
       })),
@@ -211,6 +255,21 @@ export default function EditQuotePage() {
               onChange={(e) => setReference(e.target.value)}
               className="w-full px-3 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-green-400"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-green-800">Status</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full px-3 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-green-400"
+            >
+              {statusChoices.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.display}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

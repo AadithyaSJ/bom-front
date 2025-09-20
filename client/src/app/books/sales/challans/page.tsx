@@ -12,7 +12,9 @@ type CustomerType = {
   company_name?: string;
 };
 
-type ChallanStatus = "draft" | "sent" | "accepted" | "rejected";
+type ChallanStatus = "draft" | "issued" | "dispatched" | "delivered" | "cancelled" | "returned";
+
+type InvoiceStatus = "DRAFT" | "SENT" | "PAID" | "CANCELLED" | "PARTIAL" | "OVERDUE";
 
 type Challan = {
   id: string;
@@ -23,27 +25,37 @@ type Challan = {
   delivery_date?: string;
   status: ChallanStatus;
   notes?: string;
+  related_invoice?: {
+    id: string;
+    status: InvoiceStatus;
+  };
 };
 
 export default function ChallanPage() {
   const [challans, setChallans] = useState<Challan[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [invoices, setInvoices] = useState<any[]>([]);
 
   // Pagination
   const [page, setPage] = useState(1);
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
 
+  // Editable statuses
+  const [editingChallanStatusIds, setEditingChallanStatusIds] = useState<Record<string, ChallanStatus>>({});
+  const [editingInvoiceStatusIds, setEditingInvoiceStatusIds] = useState<Record<string, InvoiceStatus>>({});
+
+  const challanStatusOptions: ChallanStatus[] = ["draft", "issued", "dispatched", "delivered", "cancelled", "returned"];
+  const invoiceStatusOptions: InvoiceStatus[] = ["DRAFT", "SENT", "PAID", "CANCELLED", "PARTIAL", "OVERDUE"];
+
   useEffect(() => {
     async function loadInvoices() {
       try {
-        const res = await fetchWithAuth(
-          "https://bom-front-production.up.railway.app/api/invoices/"
-        );
+        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/invoices/");
+        if (!res.ok) throw new Error("Failed to fetch invoices");
         const data = await res.json();
-        setInvoices(data.results);
+        setInvoices(data.results || []);
       } catch (err) {
         console.error("Failed to load invoices", err);
       }
@@ -55,9 +67,7 @@ export default function ChallanPage() {
     setLoading(true);
     setError("");
     try {
-      const apiUrl =
-        url ||
-        `https://bom-front-production.up.railway.app/api/deliverychallans/?page=${pageNumber}`;
+      const apiUrl = url || `https://bom-front-production.up.railway.app/api/deliverychallans/?page=${pageNumber}`;
       const res = await fetchWithAuth(apiUrl);
       if (!res.ok) throw new Error("Failed to fetch challans");
       const data = await res.json();
@@ -85,21 +95,78 @@ export default function ChallanPage() {
     }
   };
 
-  const getStatusColor = (status?: string) => {
-    if (!status) return "bg-gray-100 text-gray-800";
-    switch (status.toLowerCase()) {
-      case "draft":
-        return "bg-yellow-100 text-yellow-800";
-      case "sent":
-        return "bg-blue-100 text-blue-800";
-      case "accepted":
-        return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "DRAFT":
+        return "bg-yellow-300 text-yellow-900";
+      case "SENT":
+        return "bg-blue-300 text-blue-900";
+      case "ACCEPTED":
+      case "PAID":
+        return "bg-green-300 text-green-900";
+      case "REJECTED":
+      case "CANCELLED":
+        return "bg-red-300 text-red-900";
+      case "PARTIAL":
+        return "bg-orange-300 text-orange-900";
+      case "OVERDUE":
+        return "bg-pink-300 text-pink-900";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-300 text-gray-900";
     }
   };
+
+  async function updateChallanStatus(id: string) {
+    const newStatus = editingChallanStatusIds[id];
+    if (!newStatus) return;
+    try {
+      const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/deliverychallans/${id}/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert("Failed to update challan status: " + JSON.stringify(err));
+        return;
+      }
+      setChallans((curr) => curr.map((c) => (c.id === id ? { ...c, status: newStatus } : c)));
+      setEditingChallanStatusIds((curr) => {
+        const copy = { ...curr };
+        delete copy[id];
+        return copy;
+      });
+    } catch (err) {
+      alert("Network error updating challan status");
+      console.error(err);
+    }
+  }
+
+  async function updateInvoiceStatus(id: string) {
+    const newStatus = editingInvoiceStatusIds[id];
+    if (!newStatus) return;
+    try {
+      const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/invoices/${id}/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert("Failed to update invoice status: " + JSON.stringify(err));
+        return;
+      }
+      setInvoices((curr) => curr.map((inv) => (inv.id === id ? { ...inv, status: newStatus } : inv)));
+      setEditingInvoiceStatusIds((curr) => {
+        const copy = { ...curr };
+        delete copy[id];
+        return copy;
+      });
+    } catch (err) {
+      alert("Network error updating invoice status");
+      console.error(err);
+    }
+  }
 
   const handlePrevPage = () => {
     if (prevPageUrl) loadChallans(prevPageUrl);
@@ -145,40 +212,129 @@ export default function ChallanPage() {
                 </td>
               </tr>
             ) : (
-              challans.map((c) => {
-                const relatedInvoice = invoices.find(
-                  (inv) => inv.customer.id === c.customer.id
-                );
+              challans.map((challan) => {
+                const editingChallan = challan.id in editingChallanStatusIds;
+                const relatedInvoice = invoices.find((inv) => inv.customer.id === challan.customer.id);
+                const editingInvoice = relatedInvoice && relatedInvoice.id in editingInvoiceStatusIds;
+
                 return (
-                  <tr key={c.id} className="transition border-b hover:bg-green-50">
-                    <td className="px-4 py-3">{formatDate(c.date)}</td>
+                  <tr key={challan.id} className="transition border-b hover:bg-green-50">
+                    <td className="px-4 py-3">{formatDate(challan.date)}</td>
                     <td className="px-4 py-3 font-medium text-green-700">
-                      <Link
-                        href={`/books/sales/challans/${c.id}`}
-                        className="hover:underline"
-                      >
-                        {c.challan_number}
+                      <Link href={`/books/sales/challans/${challan.id}`} className="hover:underline">
+                        {challan.challan_number}
                       </Link>
                     </td>
-                    <td className="px-4 py-3">{c.reference_number}</td>
-                    <td className="px-4 py-3">{c.customer.display_name}</td>
+                    <td className="px-4 py-3">{challan.reference_number}</td>
+                    <td className="px-4 py-3">{challan.customer.display_name}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          c.status
-                        )}`}
-                      >
-                        {c.status?.toLowerCase()}
-                      </span>
+                      {editingChallan ? (
+                        <>
+                          <select
+                            value={editingChallanStatusIds[challan.id]}
+                            onChange={(e) =>
+                              setEditingChallanStatusIds((curr) => ({
+                                ...curr,
+                                [challan.id]: e.target.value as ChallanStatus,
+                              }))
+                            }
+                            className="border border-green-400 rounded px-2 py-1"
+                          >
+                            {challanStatusOptions.map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                          <button onClick={() => updateChallanStatus(challan.id)} className="ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+                            Save
+                          </button>
+                          <button
+                            onClick={() =>
+                              setEditingChallanStatusIds((curr) => {
+                                const copy = { ...curr };
+                                delete copy[challan.id];
+                                return copy;
+                              })
+                            }
+                            className="ml-2 px-3 py-1 border rounded text-gray-600 hover:bg-gray-100"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(challan.status)}`}>
+                            {challan.status}
+                          </span>
+                          <button
+                            onClick={() =>
+                              setEditingChallanStatusIds((curr) => ({ ...curr, [challan.id]: challan.status }))
+                            }
+                            className="ml-2 px-3 py-1 border rounded text-blue-600 hover:bg-blue-100"
+                          >
+                            Edit
+                          </button>
+                        </>
+                      )}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          relatedInvoice?.status
-                        )}`}
-                      >
-                        {relatedInvoice?.status?.toLowerCase() || "-"}
-                      </span>
+                      {relatedInvoice ? (
+                        editingInvoice ? (
+                          <>
+                            <select
+                              value={editingInvoiceStatusIds[relatedInvoice.id]}
+                              onChange={(e) =>
+                                setEditingInvoiceStatusIds((curr) => ({
+                                  ...curr,
+                                  [relatedInvoice.id]: e.target.value as InvoiceStatus,
+                                }))
+                              }
+                              className="border border-green-400 rounded px-2 py-1"
+                            >
+                              {invoiceStatusOptions.map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                            </select>
+                            <button onClick={() => updateInvoiceStatus(relatedInvoice.id)} className="ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+                              Save
+                            </button>
+                            <button
+                              onClick={() =>
+                                setEditingInvoiceStatusIds((curr) => {
+                                  const copy = { ...curr };
+                                  delete copy[relatedInvoice.id];
+                                  return copy;
+                                })
+                              }
+                              className="ml-2 px-3 py-1 border rounded text-gray-600 hover:bg-gray-100"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(relatedInvoice.status)}`}>
+                              {relatedInvoice.status}
+                            </span>
+                            <button
+                              onClick={() =>
+                                setEditingInvoiceStatusIds((curr) => ({
+                                  ...curr,
+                                  [relatedInvoice.id]: relatedInvoice.status,
+                                }))
+                              }
+                              className="ml-2 px-3 py-1 border rounded text-blue-600 hover:bg-blue-100"
+                            >
+                              Edit
+                            </button>
+                          </>
+                        )
+                      ) : (
+                        "-"
+                      )}
                     </td>
                   </tr>
                 );
@@ -188,7 +344,6 @@ export default function ChallanPage() {
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between mt-6 text-sm text-gray-600">
         <span>
           Showing {challans.length} challan{challans.length !== 1 ? "s" : ""}
@@ -197,21 +352,15 @@ export default function ChallanPage() {
           <button
             disabled={!prevPageUrl}
             onClick={handlePrevPage}
-            className={`flex items-center gap-1 border px-3 py-1.5 rounded-lg hover:bg-green-50 transition ${
-              !prevPageUrl ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`flex items-center gap-1 border px-3 py-1.5 rounded-lg hover:bg-green-50 transition ${!prevPageUrl ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <ChevronLeft size={14} /> Prev
           </button>
-          <button className="border px-3 py-1.5 rounded-lg bg-green-600 text-white shadow-sm">
-            {page}
-          </button>
+          <button className="border px-3 py-1.5 rounded-lg bg-green-600 text-white shadow-sm">{page}</button>
           <button
             disabled={!nextPageUrl}
             onClick={handleNextPage}
-            className={`flex items-center gap-1 border px-3 py-1.5 rounded-lg hover:bg-green-50 transition ${
-              !nextPageUrl ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`flex items-center gap-1 border px-3 py-1.5 rounded-lg hover:bg-green-50 transition ${!nextPageUrl ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             Next <ChevronRight size={14} />
           </button>
