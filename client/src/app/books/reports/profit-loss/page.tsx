@@ -12,6 +12,50 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import Link from "next/link";
 
+interface Vendor {
+  id: number;
+  name: string;
+  display_name: string;
+  address?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  website?: string | null;
+  tax_number?: string | null;
+  gst_number?: string | null;
+  pan_number?: string | null;
+  state?: string | null;
+  country?: string | null;
+  zip_code?: string | null;
+  contact_person?: string | null;
+  active: boolean;
+  created_at: string; // ISO datetime string
+  updated_at: string; // ISO datetime string
+}
+
+interface BreakdownEntry {
+  id?: number | string;
+  account_name?: string;
+  account_code?: string;
+  invoice_number?: string;
+  bill_number?: string;
+  date?: string; // ISO date string
+  amount?: number;
+  tax_amount?: number;
+  total_with_tax?: number;
+  payment_amount?: number;
+  description?: string;
+  // ... add other relevant known fields here as per your backend schema
+}
+
+type Customer = {
+  id: string | number;
+  first_name: string;
+  last_name: string;
+  // Add other fields if known
+};
+
+
 // Types - as before
 type ReportDetails = {
   operating_income: number;
@@ -23,8 +67,8 @@ type ReportDetails = {
   non_operating_expense: number;
   net_profit_loss: number;
   payments_received: number;
-  invoice_breakdown?: any[];
-  bill_breakdown?: any[];
+  invoice_breakdown?: BreakdownEntry[];
+  bill_breakdown?: BreakdownEntry[];
 };
 
 type ProfitLossReport = {
@@ -42,8 +86,8 @@ export default function ProfitLossPage() {
   const [reportBasis, setReportBasis] = useState("Accrual");
   const [compareWith, setCompareWith] = useState("None");
   const [showZeroBalance, setShowZeroBalance] = useState(true);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [vendors, setVendors] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [selectedVendor, setSelectedVendor] = useState<string | null>(null);
 

@@ -85,16 +85,26 @@ type challans = {
   total_amount: string;
   status: string;
 }
-type DocumentData = {
+type DocumentData<T> = {
   count: number;
-  results: any[];
+  results: T[];
 };
+
 
 type Item = {
   id: number;
   name: string;
   sales_description?: string;
 };
+
+type Challan = {
+  id: number;
+  challan_number: string;
+  date: string;
+  total_amount: string;
+  status: string;
+};
+
 
 export default function CustomerDetailPage() {
   const { id } = useParams();
@@ -118,40 +128,29 @@ export default function CustomerDetailPage() {
         const data = await res.json();
         setCustomer(data);
 
-        const resInvoices = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/invoices/?customer_id=${id}`
-        );
-        if (resInvoices.ok) {
-          const data: DocumentData = await resInvoices.json();
-          setInvoices(data.results);
-        }
+        const resInvoices = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/invoices/?customer_id=${id}`);
+if (resInvoices.ok) {
+  const data: DocumentData<Invoice> = await resInvoices.json();
+  setInvoices(data.results);
+}
 
-        // Quotes
-        const resQuotes = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/quotes/?customer_id=${id}`
-        );
-        if (resQuotes.ok) {
-          const data: DocumentData = await resQuotes.json();
-          setQuotes(data.results);
-        }
+const resQuotes = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/quotes/?customer_id=${id}`);
+if (resQuotes.ok) {
+  const data: DocumentData<Quote> = await resQuotes.json();
+  setQuotes(data.results);
+}
 
-        // Proforma invoices
-        const resProformas = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/proformainvoices/?customer_id=${id}`
-        );
-        if (resProformas.ok) {
-          const data: DocumentData = await resProformas.json();
-          setProformas(data.results);
-        }
+const resProformas = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/proformainvoices/?customer_id=${id}`);
+if (resProformas.ok) {
+  const data: DocumentData<Proforma> = await resProformas.json();
+  setProformas(data.results);
+}
 
-        // Delivery Challans
-        const resChallans = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/deliverychallans/?customer_id=${id}`
-        );
-        if (resChallans.ok) {
-          const data: DocumentData = await resChallans.json();
-          setChallans(data.results);
-        }
+const resChallans = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/deliverychallans/?customer_id=${id}`);
+if (resChallans.ok) {
+  const data: DocumentData<Challan> = await resChallans.json();
+  setChallans(data.results);
+}
 
       } catch (err) {
         setError("Failed to load customer data");

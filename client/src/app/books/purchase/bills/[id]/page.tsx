@@ -1,234 +1,203 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { fetchWithAuth } from "@/auth/tokenservice";
 import Link from "next/link";
 
-export interface VendorInfo {
-  id: string | number;
+// Define types aligned with your backend models
+interface Vendor {
+  id: number | string;
+  display_name: string;
+  // other vendor fields if needed
+}
+
+interface BillItem {
+  id: number | string;
+  item: number | string;
   name?: string;
-  display_name?: string;
-  // Add other known vendor fields here if needed
+  quantity: number;
+  rate: number;
+  tax_percentage: number;
+  amount: number;
+  description: string;
 }
 
-export interface BillItem {
-  id: string | number;
-  name?: string;
-  item_name?: string;
-  desc?: string;
-  description?: string;
-  qty?: number;
-  quantity?: number;
-  rate?: number;
-  unit_price?: number;
-  taxPct?: number;
-  tax_percentage?: number;
+interface FileAttachment {
+  id: number | string;
+  name: string;
 }
 
-export interface BillMeta {
-  itemsExtended?: BillItem[];
-  files?: { id?: string | number; name: string }[];
-}
-
-export interface Bill {
-  id: string;
-  bill_date?: string;
-  bill_number?: string;
-  due_date?: string;
+interface Bill {
+  id: number | string;
+  vendor: Vendor | null;
+  vendorSnapshot?: Vendor | null;
+  vendor_id: number | string;
+  bill_number: string;
   reference_number?: string;
-  total_amount?: string;
-  subtotal?: number | string;
-  tax?: number | string;
-  balance_due?: string;
-  status?: string;
+  status: string;
+  bill_date: string;
+  due_date: string;
   notes?: string;
-  vendor?: VendorInfo | string | null;
-  vendorSnapshot?: VendorInfo | null;
-  meta?: BillMeta;
-  items?: BillItem[];
+  subtotal: number;
+  tax: number;
+  total_amount: number;
+  balance_due: number;
+  items: BillItem[];
+  files: FileAttachment[];
 }
 
-export default function BillEditPage() {
-  const params = useParams();
-  const billId = params?.id ?? null;
+export default function BillDetails() {
   const router = useRouter();
+  const params = useParams();
+  const billId = params?.id;
 
   const [bill, setBill] = useState<Bill | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!billId) return;
-    setLoading(true);
-    setBill(null);
-
-    async function loadBill() {
+    async function fetchBill() {
+      setLoading(true);
       try {
         const res = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/bills/${billId}/`
+          `https://bom-front-production.up.railway.app/api/bills/${billId}`,
+          { method: "GET" }
         );
-        if (res.ok) {
-          const data = await res.json();
-          setBill(data);
-        }
+        if (!res.ok) throw new Error("Failed to fetch bill");
+        const data = await res.json();
+
+        // Safely normalize items and ensure array
+        const itemsData = Array.isArray(data.items) ? data.items : [];
+
+        const normalizedItems: BillItem[] = itemsData.map((item: any) => ({
+          id: item.id,
+          item: item.item ?? item.item_id,
+          name: item.name ?? item.item_name ?? "",
+          quantity: item.quantity ?? item.qty ?? 0,
+          rate: item.rate ?? 0,
+          tax_percentage: item.tax_percentage ?? item.taxPct ?? 0,
+          amount: item.amount ?? 0,
+          description: item.description ?? item.desc ?? "",
+        }));
+
+        // Build normalized Bill object
+        const normalizedBill: Bill = {
+          id: data.id,
+          vendor: data.vendor || null,
+          vendorSnapshot: data.vendorSnapshot,
+          vendor_id: data.vendor_id ?? (data.vendor?.id ?? ""),
+          bill_number: data.bill_number ?? "",
+          reference_number: data.reference_number ?? "",
+          status: data.status ?? "",
+          bill_date: data.bill_date ?? "",
+          due_date: data.due_date ?? "",
+          notes: data.notes ?? "",
+          subtotal: Number(data.subtotal ?? 0),
+          tax: Number(data.tax ?? 0),
+          total_amount: Number(data.total_amount ?? 0),
+          balance_due: Number(data.balance_due ?? 0),
+          items: normalizedItems,
+          files: Array.isArray(data.files) ? data.files : [],
+        };
+
+        setBill(normalizedBill);
+      } catch (error) {
+        console.error("Error loading bill:", error);
       } finally {
         setLoading(false);
       }
     }
-    loadBill();
+    if (billId) {
+      fetchBill();
+    }
   }, [billId]);
 
-  function getVendorDisplay(
-    vendor: VendorInfo | string | null | undefined,
-    vendorSnapshot: VendorInfo | null | undefined
-  ): string {
-    if (!vendor && !vendorSnapshot) return "-";
-    if (typeof vendor === "string") return vendorSnapshot?.name ?? "-";
-    if (vendor && typeof vendor === "object") {
-      return (
-        vendor.name ?? vendor.display_name ?? vendorSnapshot?.name ?? "-"
-      );
-    }
-    if (vendorSnapshot?.name) return vendorSnapshot.name;
-    return "-";
-  }
+  if (loading) return <p>Loading...</p>;
+  if (!bill) return <p>Bill not found</p>;
 
-  if (loading) return <div className="p-6">Loading...</div>;
-  if (!bill) return <div className="p-6">Bill not found.</div>;
-
-  const subtotal = parseFloat(bill.subtotal as any) || 0;
-  const tax = parseFloat(bill.tax as any) || 0;
-  const total = parseFloat(bill.total_amount ?? "0");
-  const balanceDue = parseFloat(bill.balance_due ?? "0");
+  const subtotal = bill.subtotal;
+  const tax = bill.tax;
+  const total = bill.total_amount;
+  const balanceDue = bill.balance_due;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto bg-white rounded-xl shadow">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Bill Details (View only)</h1>
-        <div className="flex items-center space-x-2">
-          <Link
-            href={`/books/purchase/bills/${bill.id}/edit`}
-            className="text-white bg-green-600 hover:bg-green-700 rounded px-4 py-1 font-semibold"
-          >
-            Edit
-          </Link>
-          <button
-            className="text-green-700 border border-green-700 rounded px-4 py-1"
-            onClick={() => router.push("/books/purchase/bills")}
-          >
-            Back
-          </button>
+    <div className="p-6 max-w-5xl mx-auto bg-white rounded shadow">
+      <h1 className="text-2xl font-semibold mb-6">Bill Details</h1>
+
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <div>
+          <span className="block text-gray-500 text-sm">Vendor</span>
+          <p>{bill.vendor?.display_name ?? bill.vendorSnapshot?.display_name ?? "Unknown"}</p>
+        </div>
+        <div>
+          <span className="block text-gray-500 text-sm">Bill Number</span>
+          <p>{bill.bill_number}</p>
+        </div>
+        <div>
+          <span className="block text-gray-500 text-sm">Status</span>
+          <p>{bill.status}</p>
+        </div>
+        <div>
+          <span className="block text-gray-500 text-sm">Bill Date</span>
+          <p>{bill.bill_date}</p>
+        </div>
+        <div>
+          <span className="block text-gray-500 text-sm">Due Date</span>
+          <p>{bill.due_date}</p>
+        </div>
+        <div>
+          <span className="block text-gray-500 text-sm">Reference Number</span>
+          <p>{bill.reference_number || "-"}</p>
         </div>
       </div>
 
-      {/* Bill Main Info */}
-      <div className="grid gap-4 md:grid-cols-2 mb-6">
-        <div>
-          <div className="text-sm text-gray-600">Vendor</div>
-          <div className="font-medium">{getVendorDisplay(bill.vendor, bill.vendorSnapshot)}</div>
-        </div>
-        <div>
-          <div className="text-sm text-gray-600">Bill #</div>
-          <div className="font-medium">{bill.bill_number ?? bill.billNo ?? bill.billNumber ?? "-"}</div>
-        </div>
-        <div>
-          <div className="text-sm text-gray-600">Status</div>
-          <div className="font-medium">{bill.status ?? "-"}</div>
-        </div>
-        <div>
-          <div className="text-sm text-gray-600">Date</div>
-          <div className="font-medium">{bill.bill_date ?? bill.billDate ?? bill.date ?? "-"}</div>
-        </div>
-        <div>
-          <div className="text-sm text-gray-600">Due Date</div>
-          <div className="font-medium">{bill.dueDate ?? bill.due_date ?? "-"}</div>
-        </div>
-        <div>
-          <div className="text-sm text-gray-600">Reference #</div>
-          <div className="font-medium">{bill.referenceNumber ?? bill.reference_number ?? "-"}</div>
-        </div>
-      </div>
-
-      {/* Bill Items */}
-      <div className="mb-6">
-        <div className="font-semibold text-emerald-700 mb-2">Items</div>
-        <table className="w-full border rounded-xl overflow-x-auto">
-          <thead className="bg-emerald-50">
-            <tr className="text-sm text-left text-emerald-800">
-              <th className="p-3">Item</th>
-              <th className="p-3">Description</th>
-              <th className="p-3">Qty</th>
-              <th className="p-3">Rate</th>
-              <th className="p-3">Tax %</th>
-              <th className="p-3">Amount</th>
+      <table className="w-full border border-gray-300 rounded shadow mb-6">
+        <thead className="bg-gray-50 text-left border-b border-gray-300">
+          <tr>
+            <th className="p-2 border-r border-gray-300">Item</th>
+            <th className="p-2 border-r border-gray-300">Description</th>
+            <th className="p-2 border-r border-gray-300">Quantity</th>
+            <th className="p-2 border-r border-gray-300">Rate</th>
+            <th className="p-2 border-r border-gray-300">Tax %</th>
+            <th className="p-2">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bill.items.map((item) => (
+            <tr key={item.id} className="border-b border-gray-200">
+              <td className="p-2 border-r border-gray-300">{item.name || "-"}</td>
+              <td className="p-2 border-r border-gray-300">{item.description}</td>
+              <td className="p-2 border-r border-gray-300">{item.quantity}</td>
+              <td className="p-2 border-r border-gray-300">₹{item.rate.toFixed(2)}</td>
+              <td className="p-2 border-r border-gray-300">{item.tax_percentage}%</td>
+              <td className="p-2">₹{item.amount.toFixed(2)}</td>
             </tr>
-          </thead>
-          <tbody>
-            {(bill.meta?.itemsExtended ?? bill.items ?? []).map((item: BillItem, i: number) => {
-              const qty = Number(item.qty ?? item.quantity ?? 0);
-              const rate = Number(item.rate ?? item.unit_price ?? 0);
-              const tax = Number(item.taxPct ?? item.tax_percentage ?? 0);
-              const amount = qty * rate * (1 + tax / 100);
-              return (
-                <tr key={item.id ?? i} className="border-t">
-                  <td className="p-2">{item.name ?? item.item_name ?? "-"}</td>
-                  <td className="p-2">{item.desc ?? item.description ?? "-"}</td>
-                  <td className="p-2">{qty}</td>
-                  <td className="p-2">{rate.toFixed(2)}</td>
-                  <td className="p-2">{tax}</td>
-                  <td className="p-2">₹ {amount.toFixed(2)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="max-w-md ml-auto text-right mb-6">
+        <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
+        <p>Tax: ₹{tax.toFixed(2)}</p>
+        <p className="font-semibold">Total: ₹{total.toFixed(2)}</p>
+        <p>Balance Due: ₹{balanceDue.toFixed(2)}</p>
       </div>
 
-      {/* Totals and Notes */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <div className="mb-2 text-sm text-gray-600">Notes</div>
-          <div className="p-3 bg-gray-50 border rounded">
-            {bill.notes ?? <span className="text-gray-400 italic">No notes</span>}
-          </div>
-        </div>
-        <div className="p-4 bg-emerald-50 rounded-xl">
-          <div className="flex justify-between py-1">
-            <span>Subtotal</span>
-            <span>₹ {subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between py-1">
-            <span>Tax</span>
-            <span>₹ {tax.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between py-2 mt-2 font-semibold border-t text-emerald-800">
-            <span>Total</span>
-            <span>₹ {total.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between py-1 border-t">
-            <span>Balance Due</span>
-            <span>₹ {balanceDue.toFixed(2)}</span>
-          </div>
-        </div>
-      </div>
+      <div className="mb-4 p-4 bg-gray-50 rounded">{bill.notes || <em>No notes provided</em>}</div>
 
-      {/* Attachments */}
-      <div>
-        <div className="mb-1 font-semibold text-emerald-700">Attachments</div>
-        {bill.meta?.files?.length ? (
-          <ul className="flex flex-wrap gap-2">
-            {bill.meta.files.map((f, i) => (
-              <li
-                key={f.id ?? i}
-                className="bg-gray-100 rounded px-3 py-1 text-sm truncate"
-              >
-                {f.name}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="italic text-gray-500">No attachments</div>
-        )}
+      <div className="flex gap-2">
+        <button
+          className="px-4 py-2 bg-gray-300 rounded"
+          onClick={() => router.back()}
+        >
+          Back
+        </button>
+        <Link
+          href={`/books/bills/${bill.id}/edit`}
+          className="px-4 py-2 bg-green-600 text-white rounded"
+        >
+          Edit
+        </Link>
       </div>
     </div>
   );
