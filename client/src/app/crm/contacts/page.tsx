@@ -5,6 +5,15 @@ import ContactsToolbar from "../components/ContactsToolbar";
 import ContactsTable from "../components/ContactsTable";
 import AddContactModal from "../components/AddContactModal";
 
+interface Contact {
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  owner: string;
+}
+
+
 export default function ContactsPage() {
   const [contacts, setContacts] = useState([
     {
@@ -18,7 +27,7 @@ export default function ContactsPage() {
 
   const [isModalOpen, setModalOpen] = useState(false);
 
-  const handleAddContact = (contact: any) => {
+  const handleAddContact = (contact: Contact) => {
     setContacts([...contacts, contact]);
     setModalOpen(false);
   };

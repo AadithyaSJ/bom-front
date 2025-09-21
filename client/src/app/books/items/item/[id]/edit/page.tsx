@@ -61,8 +61,8 @@ interface Vendor {
   shipping_pin_code?: string;
   shipping_phone?: string;
   shipping_fax?: string;
-  custom_fields?: Record<string, any>;
-  tags?: any[];
+  custom_fields?: Record<string, unknown>;
+  tags?: string[];
   remarks?: string;
   created_at: string; // ISO datetime string
 }

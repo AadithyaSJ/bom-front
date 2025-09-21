@@ -9,7 +9,7 @@ export interface VendorInfo {
   id: string | number;
   name?: string;
   display_name?: string;
-  [key: string]: any;
+  // Add other known vendor fields here if needed
 }
 
 export interface BillItem {
@@ -24,13 +24,11 @@ export interface BillItem {
   unit_price?: number;
   taxPct?: number;
   tax_percentage?: number;
-  [key: string]: any;
 }
 
 export interface BillMeta {
   itemsExtended?: BillItem[];
   files?: { id?: string | number; name: string }[];
-  [key: string]: any;
 }
 
 export interface Bill {
@@ -49,7 +47,6 @@ export interface Bill {
   vendorSnapshot?: VendorInfo | null;
   meta?: BillMeta;
   items?: BillItem[];
-  [key: string]: any;
 }
 
 export default function BillEditPage() {
@@ -81,15 +78,15 @@ export default function BillEditPage() {
     loadBill();
   }, [billId]);
 
-  function getVendorDisplay(vendor: VendorInfo | string | null | undefined, vendorSnapshot: VendorInfo | null | undefined): string {
+  function getVendorDisplay(
+    vendor: VendorInfo | string | null | undefined,
+    vendorSnapshot: VendorInfo | null | undefined
+  ): string {
     if (!vendor && !vendorSnapshot) return "-";
     if (typeof vendor === "string") return vendorSnapshot?.name ?? "-";
     if (vendor && typeof vendor === "object") {
       return (
-        vendor.name ??
-        vendor.display_name ??
-        vendorSnapshot?.name ??
-        "-"
+        vendor.name ?? vendor.display_name ?? vendorSnapshot?.name ?? "-"
       );
     }
     if (vendorSnapshot?.name) return vendorSnapshot.name;

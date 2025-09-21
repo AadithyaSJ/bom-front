@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,35 +14,25 @@ import {
   Flag,
 } from "lucide-react";
 
-type NavItem = {
+interface NavItem {
   id: string;
   label: string;
   href: string;
-  Icon: React.ComponentType<any>;
-};
+  Icon: React.FC<{ size?: number }>;
+}
 
 const NAV_ITEMS: NavItem[] = [
   { id: "pipelines", label: "Pipelines", href: "/crm/pipelines", Icon: Layers },
   { id: "contacts", label: "Contacts", href: "/crm/contacts", Icon: Users },
-  {
-    id: "companies",
-    label: "Companies",
-    href: "/crm/company",
-    Icon: BookOpen,
-  },
+  { id: "companies", label: "Companies", href: "/crm/company", Icon: BookOpen },
   { id: "products", label: "Products", href: "", Icon: Box },
-  {
-    id: "activities",
-    label: "Activities",
-    href: "",
-    Icon: Calendar,
-  },
+  { id: "activities", label: "Activities", href: "", Icon: Calendar },
   { id: "reports", label: "Reports", href: "", Icon: Flag },
   { id: "settings", label: "Settings", href: "", Icon: Settings },
 ];
 
 export default function Sidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -50,7 +40,7 @@ export default function Sidebar() {
       className={`hidden md:flex flex-col ${
         collapsed ? "w-14" : "w-52"
       } bg-[#0f2230] text-white transition-all duration-200 sticky top-12 z-40 h-[calc(100vh-3rem)]`}
-      aria-label="left sidebar"
+      aria-label="Main navigation sidebar"
     >
       {/* Workspace / Brand */}
       <div className="flex items-center justify-between px-2 py-2 border-b border-white/10">
@@ -69,8 +59,6 @@ export default function Sidebar() {
             </div>
           )}
         </div>
-
-        {/* Collapse toggle */}
         <button
           className="ml-1 p-1 rounded hover:bg-white/10"
           onClick={() => setCollapsed((s) => !s)}
@@ -78,36 +66,36 @@ export default function Sidebar() {
         >
           <Plus
             size={12}
-            className={`${collapsed ? "rotate-45" : "rotate-0"} transition`}
+            className={`transition-transform ${
+              collapsed ? "rotate-45" : "rotate-0"
+            }`}
           />
         </button>
       </div>
-
-      {/* Nav */}
-      <nav className="flex-1 overflow-auto px-1 py-2">
+      {/* Navigation */}
+      <nav className="flex-1 overflow-auto px-1 py-2" aria-label="Sidebar navigation">
         <ul className="space-y-1">
-          {NAV_ITEMS.map((it) => {
-            const isActive = pathname?.startsWith(it.href);
+          {NAV_ITEMS.map(({ id, label, href, Icon }) => {
+            const isActive = href && pathname.startsWith(href);
             return (
-              <li key={it.id}>
+              <li key={id}>
                 <Link
-                  href={it.href}
-                  className={`flex items-center gap-2 py-1.5 px-2 rounded-md mx-1 text-xs hover:bg-white/10 transition ${
+                  href={href || "#"}
+                  className={`flex items-center gap-2 py-1.5 px-2 mx-1 rounded-md text-xs transition-colors ${
                     isActive ? "bg-white/10 font-medium" : "text-white/80"
-                  }`}
+                  } hover:bg-white/10`}
                 >
                   <span className="flex items-center justify-center w-6">
-                    <it.Icon size={16} />
+                    <Icon size={16} />
                   </span>
-                  {!collapsed && <span>{it.label}</span>}
+                  {!collapsed && <span>{label}</span>}
                 </Link>
               </li>
             );
           })}
         </ul>
       </nav>
-
-      {/* User */}
+      {/* User info */}
       <div className="px-2 py-2 border-t border-white/10">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs">

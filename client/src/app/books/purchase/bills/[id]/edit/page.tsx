@@ -1,429 +1,427 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { fetchWithAuth } from "@/auth/tokenservice";
-import { FaUpload, FaTrash, FaPlus } from "react-icons/fa";
+import Link from "next/link";
 
-type Item = { id: string; name: string };
-type Vendor = { id: number; display_name: string };
-type FileBlob = { id: string; name: string; size: number; type: string; dataUrl: string };
-type BillItem = { id: string; name: string; qty: number; rate: number; taxPct: number; desc: string };
-type Bill = {
-  id: string;
+interface Vendor {
+  id: number;
+  display_name: string;
+}
+
+interface BillItem {
+  id: number;
+  item: number;
+  quantity: number;
+  rate: number;
+  tax_percentage: number;
+  amount: number;
+  description?: string;
+}
+
+interface FileInfo {
+  id: number;
+  name: string;
+}
+
+interface Bill {
+  id: number;
+  vendor: Vendor;
+  vendor_id: number;
   bill_number: string;
-  reference_number: string;
+  reference_number?: string;
+  status: "PAID" | "UNPAID" | "PARTIAL" | "DRAFT";
   bill_date: string;
   due_date: string;
-  status: string;
-  vendor: Vendor;
-  notes: string;
-  meta?: { items: BillItem[]; files: FileBlob[] };
-};
+  notes?: string;
+  subtotal: number;
+  tax: number;
+  total_amount: number;
+  balance_due: number;
+  items: BillItem[];
+  files: FileInfo[];
+}
 
-const billStatuses = ["PAID", "UNPAID", "PARTIAL", "DRAFT"];
-
-const inputClass = "w-full border rounded px-2 py-1";
+const BILL_STATUSES = ["PAID", "UNPAID", "PARTIAL", "DRAFT"] as const;
 
 export default function BillEditPage() {
   const router = useRouter();
   const params = useParams();
-  const billId = params?.id ?? null;
+  const billId = params?.id;
 
+  // State variables
   const [bill, setBill] = useState<Bill | null>(null);
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Form fields
+  const [vendorId, setVendorId] = useState<number | "">("");
   const [billNumber, setBillNumber] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [billDate, setBillDate] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [status, setStatus] = useState("DRAFT");
-  const [vendorId, setVendorId] = useState<number | "">("");
+  const [status, setStatus] = useState<typeof BILL_STATUSES[number]>("DRAFT");
   const [notes, setNotes] = useState("");
-  const [billItems, setBillItems] = useState<BillItem[]>([]);
-  const [files, setFiles] = useState<FileBlob[]>([]);
+  const [items, setItems] = useState<BillItem[]>([]);
+  const [files, setFiles] = useState<FileInfo[]>([]);
 
+  // Fetch data
   useEffect(() => {
-    (async () => {
+    async function fetchData() {
+      setLoading(true);
       try {
-        const [vRes, iRes] = await Promise.all([
-          fetchWithAuth("https://bom-front-production.up.railway.app/api/vendors"),
-          fetchWithAuth("https://bom-front-production.up.railway.app/api/items"),
-        ]);
-        if (vRes.ok) setVendors((await vRes.json()).results || []);
-        if (iRes.ok) setItems((await iRes.json()).results || []);
-      } catch {
-        // handle errors or set empty
-      }
-    })();
-  }, []);
+        // Fetch vendors
+        const vendorsRes = await fetchWithAuth("https://bom-front-production.up.railway.app/api/vendors");
+        if (vendorsRes.ok) {
+          const vendorsData = await vendorsRes.json();
+          setVendors(vendorsData.results || []);
+        }
 
-  useEffect(() => {
-    if (!billId) return;
-    setLoading(true);
-    (async () => {
-      try {
-        const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/bills/${billId}`);
-        if (!res.ok) throw new Error("Failed to fetch bill");
-        const data: Bill = await res.json();
-        setBill(data);
+        if (billId) {
+          // Fetch bill data
+          const billRes = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/bills/${billId}`);
+          if (billRes.ok) {
+            const data = await billRes.json();
 
-        setBillNumber(data.bill_number);
-        setReferenceNumber(data.reference_number);
-        setBillDate(data.bill_date);
-        setDueDate(data.due_date);
-        setStatus(data.status);
-        setVendorId(data.vendor?.id ?? "");
-        setNotes(data.notes);
-        setBillItems(
-          (data.meta?.items || []).map((item) => ({
-            id: item.id || crypto.randomUUID(),
-            name: item.name,
-            qty: item.qty,
-            rate: item.rate,
-            taxPct: item.taxPct,
-            desc: item.desc || "",
-          }))
-        );
-        setFiles(data.meta?.files || []);
-      } catch (e) {
-        // handle error
+            // Normalize items
+            const normalizedItems = (data.items || []).map((item: any) => ({
+              id: item.id,
+              item: item.item || item.item_id,
+              quantity: item.quantity || item.qty,
+              rate: parseFloat(item.rate),
+              tax_percentage: parseFloat(item.tax_percentage),
+              amount: parseFloat(item.amount),
+              description: item.description || item.desc || "",
+            }));
+
+            setBill({
+              id: data.id,
+              vendor: data.vendor,
+              vendor_id: data.vendor_id || (data.vendor?.id ?? null),
+              bill_number: data.bill_number,
+              reference_number: data.reference_number || "",
+              status: data.status,
+              bill_date: data.bill_date,
+              due_date: data.due_date,
+              notes: data.notes || "",
+              subtotal: parseFloat(data.subtotal),
+              tax: parseFloat(data.tax),
+              total_amount: parseFloat(data.total_amount),
+              balance_due: parseFloat(data.balance_due),
+              items: normalizedItems,
+              files: data.files || [],
+            });
+
+            setVendorId(data.vendor_id || "");
+            setBillNumber(data.bill_number);
+            setReferenceNumber(data.reference_number || "");
+            setBillDate(data.bill_date);
+            setDueDate(data.due_date);
+            setStatus(data.status);
+            setNotes(data.notes || "");
+            setItems(normalizedItems);
+            setFiles(data.files || []);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading data", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    })();
+    }
+
+    fetchData();
   }, [billId]);
 
-  const subtotal = useMemo(() => billItems.reduce((acc, i) => acc + i.qty * i.rate, 0), [billItems]);
-  const taxTotal = useMemo(() => billItems.reduce((acc, i) => acc + i.qty * i.rate * (i.taxPct / 100), 0), [billItems]);
+  // Calculate totals
+  const subtotal = items.reduce((acc, item) => acc + item.quantity * item.rate, 0);
+  const taxTotal = items.reduce((acc, item) => acc + item.quantity * item.rate * (item.tax_percentage / 100), 0);
   const total = subtotal + taxTotal;
 
-  function addItem() {
-    setBillItems((curr) => [...curr, { id: crypto.randomUUID(), name: "", qty: 1, rate: 0, taxPct: 0, desc: "" }]);
-  }
-
-  function removeItem(id: string) {
-    setBillItems((curr) => (curr.length > 1 ? curr.filter((i) => i.id !== id) : curr));
-  }
-
-  function updateItem(id: string, field: keyof BillItem, value: string | number) {
-    setBillItems((curr) => curr.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
-  }
-
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files) return;
-    const selected = Array.from(e.target.files).slice(0, 10 - files.length);
-    Promise.all(
-      selected.map((file) =>
-        new Promise<FileBlob>((res, rej) => {
-          const reader = new FileReader();
-          reader.onload = () => res({ id: crypto.randomUUID(), name: file.name, size: file.size, type: file.type, dataUrl: String(reader.result) });
-          reader.onerror = rej;
-          reader.readAsDataURL(file);
-        })
-      )
-    ).then((readFiles) => setFiles((curr) => [...curr, ...readFiles]));
-    e.target.value = "";
-  }
-
-  function removeFile(id: string) {
-    setFiles((curr) => curr.filter((f) => f.id !== id));
-  }
-
-  async function save() {
+  // Save function
+  async function saveBill() {
     if (!vendorId) {
-      alert("Select a vendor");
+      alert("Please select a vendor");
       return;
     }
     if (!billNumber.trim()) {
-      alert("Enter bill number");
+      alert("Please enter a bill number");
       return;
     }
-    const filteredItems = billItems.filter((i) => i.name.trim() && i.qty > 0);
-    if (!filteredItems.length) {
-      alert("Add at least one item");
+    if (!billDate) {
+      alert("Please select a bill date");
+      return;
+    }
+    if (!dueDate) {
+      alert("Please select a due date");
+      return;
+    }
+    if (!items.length) {
+      alert("Please add at least one item");
       return;
     }
 
+    // const token = localStorage.getItem("authToken");
+    // if (!token) {
+    //   alert("Please log in");
+    //   return;
+    // }
+
     const payload = {
+      vendor_id: vendorId,
       bill_number: billNumber.trim(),
       reference_number: referenceNumber.trim(),
+      status,
       bill_date: billDate,
       due_date: dueDate,
-      status,
-      vendor_id: vendorId,
       notes,
       subtotal,
       tax: taxTotal,
       total_amount: total,
-      item_details: filteredItems.map((i) => ({
-        item_id: items.find((it) => it.name === i.name)?.id,
-        quantity: i.qty,
-        rate: i.rate,
-        tax_pct: i.taxPct,
-        desc: i.desc,
+      items: items.map(item => ({
+        item: item.item,
+        quantity: item.quantity,
+        rate: item.rate,
+        tax_percentage: item.tax_percentage,
+        description: item.description,
       })),
-      attachment_ids: files.map((f) => f.id),
+      file_ids: files.map(file => file.id),
     };
 
     try {
-      const token = localStorage.getItem("authToken") || "";
-      const url = billId ? `https://bom-front-production.up.railway.app/api/bills/${billId}/` : "https://bom-front-production.up.railway.app/api/bills/";
+      const url = billId ? `https://bom-front-production.up.railway.app/api/bills/${billId}` : "https://bom-front-production.up.railway.app/api/bills";
       const method = billId ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await fetchWithAuth(url, {
         method,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        alert(`Error saving bill: ${JSON.stringify(err)}`);
+        const errorData = await res.json();
+        alert(`Failed to save bill: ${JSON.stringify(errorData)}`);
         return;
       }
 
-      alert("Bill saved successfully!");
+      alert("Bill saved successfully.");
       router.push("/books/purchase/bills");
-    } catch {
-      alert("Error saving. Please try again.");
+    } catch (error) {
+      alert("Error saving bill, please try again.");
+      console.error(error);
     }
   }
 
   if (loading) return <div>Loading...</div>;
+  if (!bill && billId) return <div>Bill not found</div>;
 
   return (
-    <div className="container max-w-5xl mx-auto p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-semibold mb-6">{billId ? "Edit Bill" : "New Bill"}</h1>
+    <div className="container mx-auto max-w-5xl p-4">
+      <h1 className="text-3xl font-bold mb-6">{billId ? "Edit Bill" : "New Bill"}</h1>
 
-      <label>Vendor</label>
-      <select className="border p-2 w-full rounded mb-4" value={vendorId} onChange={(e) => setVendorId(Number(e.target.value))}>
-        <option value="">Select a vendor</option>
-        {vendors.map((v) => (
-          <option key={v.id} value={v.id}>{v.display_name}</option>
-        ))}
-      </select>
-
-      <label>Bill Number</label>
-      <input className="border p-2 w-full rounded mb-4" value={billNumber} onChange={(e) => setBillNumber(e.target.value)} />
-
-      <label>Reference Number</label>
-      <input className="border p-2 w-full rounded mb-4" value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} />
-
-      <label>Bill Date</label>
-      <input type="date" className="border p-2 w-full rounded mb-4" value={billDate} onChange={(e) => setBillDate(e.target.value)} />
-
-      <label>Due Date</label>
-      <input type="date" className="border p-2 w-full rounded mb-4" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-
-      <label>Status</label>
-      <select className="border p-2 w-full rounded mb-4" value={status} onChange={(e) => setStatus(e.target.value)}>
-        {billStatuses.map((s) => (
-          <option key={s} value={s}>{s}</option>
-        ))}
-      </select>
-
-      {/* Items */}
-      <div>
-  <h2 className="text-xl font-semibold mb-2">Items</h2>
-  <button
-    onClick={() => addItem()}
-    className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-  >
-    <FaPlus className="inline mr-2" />
-    Add Item
-  </button>
-  <div className="overflow-auto border rounded shadow-sm">
-    <table className="min-w-full table-fixed border-collapse">
-      <thead className="bg-green-50 border-b border-green-300">
-        <tr>
-          <th className="py-2 px-3 text-left font-semibold text-green-700">Name</th>
-          <th className="py-2 px-3 text-left font-semibold text-green-700">Description</th>
-          <th className="py-2 px-3 text-left font-semibold text-green-700">Qty</th>
-          <th className="py-2 px-3 text-left font-semibold text-green-700">Rate</th>
-          <th className="py-2 px-3 text-left font-semibold text-green-700">Tax %</th>
-          <th className="py-2 px-3 text-left font-semibold text-green-700">Amount</th>
-          <th className="py-2 px-3"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {billItems.map((item, idx) => {
-          const bgColor = idx % 2 === 0 ? 'bg-white' : 'bg-green-50';
-          const amount = item.qty * item.rate * (1 + (item.taxPct ?? 0) / 100);
-          return (
-            <tr key={item.id} className={`${bgColor} hover:bg-green-100 transition`}>
-              <td className="p-2">
-                <input
-                  list="items-list"
-                  value={item.name}
-                  onChange={(e) => updateItemField(item.id, "name", e.target.value)}
-                  className="w-full px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Item name"
-                />
-                <datalist id="items-list">
-                  {items.map((it) => (
-                    <option key={it.id} value={it.name} />
-                  ))}
-                </datalist>
-              </td>
-              <td className="p-2">
-                <input
-                  value={item.desc}
-                  onChange={(e) => updateItemField(item.id, "desc", e.target.value)}
-                  className="w-full px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Description"
-                />
-              </td>
-              <td className="p-2 w-24">
-                <input
-                  type="number"
-                  min={0}
-                  value={item.qty}
-                  onChange={(e) => updateItemField(item.id, "qty", Number(e.target.value))}
-                  className="w-full px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </td>
-              <td className="p-2 w-28">
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={item.rate}
-                  onChange={(e) => updateItemField(item.id, "rate", Number(e.target.value))}
-                  className="w-full px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </td>
-              <td className="p-2 w-24">
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={item.taxPct}
-                  onChange={(e) => updateItemField(item.id, "taxPct", Number(e.target.value))}
-                  className="w-full px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </td>
-              <td className="p-2 w-28 font-semibold text-green-700">₹ {amount.toFixed(2)}</td>
-              <td className="p-2 text-center w-16">
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="text-red-600 hover:text-red-800 font-bold"
-                  aria-label="Remove item"
-                >
-                  <FaTrash />
-                </button>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-
-      {/* Attachments */}
-     <div className="mt-6 bg-green-50 p-4 rounded shadow-sm">
-  <h2 className="text-lg font-semibold mb-3">Attachments</h2>
-
-  <label 
-    className="inline-flex items-center gap-2 cursor-pointer text-green-700 hover:text-green-900"
-    title="Upload Files"
-  >
-    <FaUpload className="text-green-600" />
-    <span className="underline">Upload Files</span>
-    <input
-      type="file"
-      multiple
-      className="hidden"
-      onChange={handleFileChange}
-      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
-    />
-  </label>
-
-  {files.length === 0 ? (
-    <p className="mt-3 text-gray-600">No files uploaded.</p>
-  ) : (
-    <div className="mt-3 flex flex-wrap gap-3">
-      {files.map(file => (
-        <div
-          key={file.id}
-          className="flex items-center gap-2 bg-white border border-green-300 rounded px-3 py-1 shadow-sm"
-        >
-          <span className="truncate max-w-xs">{file.name}</span>
-          <button
-            onClick={() => removeFile(file.id)}
-            className="text-red-600 hover:text-red-800 font-bold"
-            title="Remove file"
-          >
-            &times;
-          </button>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
-
-
-      {/* Notes */}
-      <div>
-        <label>Notes</label>
-        <textarea className="border w-full p-2 rounded mb-6" rows={5} value={notes} onChange={(e) => setNotes(e.target.value)} />
+      <div className="mb-4">
+        <label className="mb-1 block font-semibold">Vendor</label>
+        <select className="w-full border p-2 rounded" value={vendorId} onChange={e => setVendorId(Number(e.target.value))}>
+          <option value="">Select Vendor</option>
+          {vendors.map(vendor => (
+            <option key={vendor.id} value={vendor.id}>
+              {vendor.display_name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Summary & Submit */}
-      <div className="mt-6 p-4 bg-green-50 rounded shadow-md flex justify-between items-center sticky bottom-0">
-  <div className="space-y-1 text-green-900 font-semibold">
-    <div>Subtotal: ₹{subtotal.toFixed(2)}</div>
-    <div>Tax: ₹{taxTotal.toFixed(2)}</div>
-    <div className="text-xl border-t pt-2 border-green-700">Total: ₹{total.toFixed(2)}</div>
-  </div>
+      <div className="mb-4">
+        <label className="mb-1 block font-semibold">Bill Number</label>
+        <input
+          type="text"
+          className="w-full border p-2 rounded"
+          value={billNumber}
+          onChange={e => setBillNumber(e.target.value)}
+        />
+      </div>
 
-  <div className="flex gap-3">
-    <button
-      onClick={() => router.back()}
-      className="px-4 py-2 rounded border border-green-700 text-green-700 hover:bg-green-100"
-    >
-      Cancel
-    </button>
-    <button
-      onClick={save}
-      className="px-6 py-2 rounded bg-green-700 text-white hover:bg-green-800"
-    >
-      Save
-    </button>
-  </div>
-</div>
+      <div className="mb-4">
+        <label className="mb-1 block font-semibold">Reference Number</label>
+        <input
+          type="text"
+          className="w-full border p-2 rounded"
+          value={referenceNumber}
+          onChange={e => setReferenceNumber(e.target.value)}
+        />
+      </div>
 
+      <div className="mb-4">
+        <label className="mb-1 block font-semibold">Bill Date</label>
+        <input
+          type="date"
+          className="w-full border p-2 rounded"
+          value={billDate}
+          onChange={e => setBillDate(e.target.value)}
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="mb-1 block font-semibold">Due Date</label>
+        <input
+          type="date"
+          className="w-full border p-2 rounded"
+          value={dueDate}
+          onChange={e => setDueDate(e.target.value)}
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="mb-1 block font-semibold">Status</label>
+        <select className="w-full border p-2 rounded" value={status} onChange={e => setStatus(e.target.value as typeof BILL_STATUSES[number])}>
+          {BILL_STATUSES.map(status => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mb-4">
+        <label className="mb-1 block font-semibold">Notes</label>
+        <textarea className="w-full border p-2 rounded" value={notes} onChange={e => setNotes(e.target.value)} rows={4} />
+      </div>
+
+      <div className="mb-4">
+        <h2 className="mb-2 text-xl font-semibold">Items</h2>
+        <button
+          className="mb-4 px-4 py-2 rounded bg-green-600 text-white"
+          onClick={() => setItems(prev => [...prev, { id: Date.now(), item: 0, quantity: 1, rate: 0, tax_percentage: 0, amount: 0, description: "" }])}
+        >
+          Add Item
+        </button>
+        <table className="w-full border-collapse border border-gray-300">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border p-2">Item ID</th>
+              <th className="border p-2">Description</th>
+              <th className="border p-2">Quantity</th>
+              <th className="border p-2">Rate</th>
+              <th className="border p-2">Tax %</th>
+              <th className="border p-2">Amount</th>
+              <th className="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, index) => {
+              const amount = item.quantity * item.rate * (1 + item.tax_percentage / 100);
+              return (
+                <tr key={item.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                  <td className="border p-2">
+                    <input
+                      type="number"
+                      className="w-full border p-1 rounded"
+                      value={item.item}
+                      onChange={e => {
+                        const val = Number(e.target.value);
+                        setItems(oldItems => oldItems.map(i => (i.id === item.id ? { ...i, item: val } : i)));
+                      }}
+                    />
+                  </td>
+                  <td className="border p-2">
+                    <input
+                      type="text"
+                      className="w-full border p-1 rounded"
+                      value={item.description}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setItems(oldItems => oldItems.map(i => (i.id === item.id ? { ...i, description: val } : i)));
+                      }}
+                    />
+                  </td>
+                  <td className="border p-2">
+                    <input
+                      type="number"
+                      min={0}
+                      className="w-full border p-1 rounded"
+                      value={item.quantity}
+                      onChange={e => {
+                        const val = Number(e.target.value);
+                        setItems(oldItems => oldItems.map(i => (i.id === item.id ? { ...i, quantity: val } : i)));
+                      }}
+                    />
+                  </td>
+                  <td className="border p-2">
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      className="w-full border p-1 rounded"
+                      value={item.rate}
+                      onChange={e => {
+                        const val = Number(e.target.value);
+                        setItems(oldItems => oldItems.map(i => (i.id === item.id ? { ...i, rate: val } : i)));
+                      }}
+                    />
+                  </td>
+                  <td className="border p-2">
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      className="w-full border p-1 rounded"
+                      value={item.tax_percentage}
+                      onChange={e => {
+                        const val = Number(e.target.value);
+                        setItems(oldItems => oldItems.map(i => (i.id === item.id ? { ...i, tax_percentage: val } : i)));
+                      }}
+                    />
+                  </td>
+                  <td className="border p-2 font-semibold text-right">₹{amount.toFixed(2)}</td>
+                  <td className="border p-2 text-center">
+                    <button
+                      className="text-red-600 hover:text-red-700"
+                      disabled={items.length <= 1}
+                      onClick={() => setItems(oldItems => oldItems.filter(i => i.id !== item.id))}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mb-4">
+        <h2 className="mb-2 text-xl font-semibold">Attachments</h2>
+        {files.length === 0 ? (
+          <p>No attachments uploaded.</p>
+        ) : (
+          <ul className="flex flex-wrap gap-2">
+            {files.map(file => (
+              <li key={file.id} className="border p-1 rounded">{file.name}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="mb-16" />
+
+      <div className="fixed bottom-0 left-0 w-full bg-white shadow px-4 py-3 flex justify-between items-center">
+        <div>
+          <p className="font-semibold">Subtotal: ₹{subtotal.toFixed(2)}</p>
+          <p className="font-semibold">Tax: ₹{taxTotal.toFixed(2)}</p>
+          <p className="text-xl font-bold">Total: ₹{total.toFixed(2)}</p>
+        </div>
+        <div className="space-x-2">
+          <button className="btn btn-secondary" onClick={() => router.back()}>
+            Cancel
+          </button>
+          <button className="btn btn-primary" onClick={saveBill}>
+            Save
+          </button>
+        </div>
+      </div>
     </div>
   );
-
-  function updateItemField(id: string, field: keyof BillItem, value: any) {
-    setBillItems((cur) => cur.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
-  }
-  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files) return;
-    const selected = Array.from(e.target.files).slice(0, 10 - files.length);
-    Promise.all(
-      selected.map(
-        (file) =>
-          new Promise<FileBlob>((res, rej) => {
-            const reader = new FileReader();
-            reader.onload = () =>
-              res({
-                id: crypto.randomUUID(),
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                dataUrl: String(reader.result),
-              });
-            reader.onerror = rej;
-            reader.readAsDataURL(file);
-          })
-      )
-    ).then((readFiles) => setFiles((cur) => [...cur, ...readFiles]));
-    e.target.value = "";
-  }
-
 }
