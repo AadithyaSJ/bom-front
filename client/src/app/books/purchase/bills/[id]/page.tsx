@@ -12,6 +12,23 @@ interface Vendor {
   // other vendor fields if needed
 }
 
+interface RawItem {
+  id: number | string;
+  item?: number | string;
+  item_id?: number | string;
+  name?: string;
+  item_name?: string;
+  quantity?: number;
+  qty?: number;
+  rate?: number;
+  tax_percentage?: number;
+  taxPct?: number;
+  amount?: number;
+  description?: string;
+  desc?: string;
+}
+
+
 interface BillItem {
   id: number | string;
   item: number | string;
@@ -69,16 +86,16 @@ export default function BillDetails() {
         // Safely normalize items and ensure array
         const itemsData = Array.isArray(data.items) ? data.items : [];
 
-        const normalizedItems: BillItem[] = itemsData.map((item: any) => ({
-          id: item.id,
-          item: item.item ?? item.item_id,
-          name: item.name ?? item.item_name ?? "",
-          quantity: item.quantity ?? item.qty ?? 0,
-          rate: item.rate ?? 0,
-          tax_percentage: item.tax_percentage ?? item.taxPct ?? 0,
-          amount: item.amount ?? 0,
-          description: item.description ?? item.desc ?? "",
-        }));
+        const normalizedItems: Bill["items"] = (Array.isArray(data.items) ? data.items : []).map((item: RawItem) => ({
+  id: item.id,
+  item: item.item ?? item.item_id ?? "",
+  name: item.name ?? item.item_name ?? "",
+  quantity: item.quantity ?? item.qty ?? 0,
+  rate: item.rate ?? 0,
+  tax_percentage: item.tax_percentage ?? item.taxPct ?? 0,
+  amount: item.amount ?? 0,
+  description: item.description ?? item.desc ?? "",
+}));
 
         // Build normalized Bill object
         const normalizedBill: Bill = {

@@ -10,6 +10,23 @@ interface Vendor {
   display_name: string;
 }
 
+interface RawItem {
+  id: number | string;
+  item?: number | string;
+  item_id?: number | string;
+  name?: string;
+  item_name?: string;
+  quantity?: number;
+  qty?: number;
+  rate?: number;
+  tax_percentage?: number;
+  taxPct?: number;
+  amount?: number;
+  description?: string;
+  desc?: string;
+}
+
+
 interface BillItem {
   id: number;
   item: number;
@@ -85,15 +102,17 @@ export default function BillEditPage() {
             const data = await billRes.json();
 
             // Normalize items
-            const normalizedItems = (data.items || []).map((item: any) => ({
-              id: item.id,
-              item: item.item || item.item_id,
-              quantity: item.quantity || item.qty,
-              rate: parseFloat(item.rate),
-              tax_percentage: parseFloat(item.tax_percentage),
-              amount: parseFloat(item.amount),
-              description: item.description || item.desc || "",
-            }));
+            const normalizedItems: Bill["items"] = (data.items ?? []).map((item: RawItem) => ({
+  id: item.id,
+  item: item.item ?? item.item_id ?? 0,
+  name: item.name ?? item.item_name ?? "",
+  quantity: item.quantity ?? item.qty ?? 0,
+  rate: item.rate ?? 0,
+  tax_percentage: item.tax_percentage ?? item.taxPct ?? 0,
+  amount: item.amount ?? 0,
+  description: item.description ?? item.desc ?? "",
+}));
+
 
             setBill({
               id: data.id,
