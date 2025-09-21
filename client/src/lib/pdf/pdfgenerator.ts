@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 import autoTable from "jspdf-autotable";
 
 
+type TableCell = {
+  content: string | string[];
+};
+
 type SalesPDFData = {
   title: string;
   documentNumber: string;
@@ -113,7 +117,7 @@ export function generatePDF(data: SalesPDFData) {
   autoTable(doc, {
   startY: yStart + 10,
   head: [["#", "Item & Description", "Qty", "Rate", "Amount"]],
-  body: data.items.map((i, idx): any[] => [
+  body: data.items.map((i, idx): TableCell[] => [
     { content: (idx + 1).toString() },
     { content: [i.name, i.sales_description || ""] },
     { content: i.qty.toFixed(2) },
@@ -135,7 +139,8 @@ export function generatePDF(data: SalesPDFData) {
 
 
 
-  let finalY = (doc as any).lastAutoTable.finalY || yStart + 20;
+  let finalY = (doc as unknown as { lastAutoTable?: { finalY?: number }, internal: { pageSize: { height: number } } }).lastAutoTable?.finalY ?? (yStart + 20);
+
   const pageHeight = doc.internal.pageSize.height;
 
   // Totals
