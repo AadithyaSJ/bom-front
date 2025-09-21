@@ -4,11 +4,76 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { fetchWithAuth } from "@/auth/tokenservice";
 
+interface Item {
+  id: string | number;
+  name: string;
+  unit: "Nos" | "Kgs" | "Litres";
+  manage_sales_info: boolean;
+  sales_selling_price?: number | null;
+  sales_account: string;
+  sales_description: string;
+  manage_purchase_info: boolean;
+  purchase_cost_price?: number | null;
+  purchase_account: string;
+  purchase_description: string;
+  preferred_vendor?: number | null; // Vendor id
+  track_inventory: boolean;
+  inventory_account: string;
+  inventory_valuation_method: string;
+  opening_stock?: number | null;
+  opening_stock_rate_per_unit?: number | null;
+  reorder_point?: number | null;
+  current_stock: number;
+  created_at: string;  // ISO datetime string
+}
+
+interface Vendor {
+  id: string | number;
+  vendor_type: "business" | "individual";
+  salutation?: "dr" | "mr" | "ms" | "mrs" | null;
+  first_name?: string;
+  last_name?: string;
+  company_name?: string;
+  display_name: string;
+  email: string;
+  work_phone?: string;
+  mobile?: string;
+  pan?: string;
+  currency: "AED" | "AUD" | "BND" | "CAD" | "CNY" | "EUR" | "GBP" | "INR" | "JPY" | "SAR" | "USD" | "ZAR";
+  opening_balance: number;
+  current_balance: number;
+  payment_terms: "due_on_receipt" | "net_7" | "net_15" | "net_30" | "net_45";
+  billing_attention?: string;
+  billing_country?: string;
+  billing_street1?: string;
+  billing_street2?: string;
+  billing_city?: string;
+  billing_state?: string;
+  billing_pin_code?: string;
+  billing_phone?: string;
+  billing_fax?: string;
+  shipping_attention?: string;
+  shipping_country?: string;
+  shipping_street1?: string;
+  shipping_street2?: string;
+  shipping_city?: string;
+  shipping_state?: string;
+  shipping_pin_code?: string;
+  shipping_phone?: string;
+  shipping_fax?: string;
+  custom_fields?: Record<string, any>;
+  tags?: any[];
+  remarks?: string;
+  created_at: string; // ISO datetime string
+}
+
+
+
 export default function EditItemPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [item, setItem] = useState<any>(null);
-const [vendors, setVendors] = useState<any[]>([]);
+  const [item, setItem] = useState<Item | null>(null);
+const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);

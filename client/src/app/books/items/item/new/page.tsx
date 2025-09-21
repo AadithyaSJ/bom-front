@@ -9,11 +9,31 @@ interface Vendor {
   display_name: string;
 }
 
+interface NewItemPayload {
+  name: string;
+  unit: "Nos" | "Kgs" | "Litres";
+  manage_sales_info: boolean;
+  sales_selling_price?: number;
+  sales_account?: string;
+  sales_description?: string;
+  manage_purchase_info: boolean;
+  purchase_cost_price?: number;
+  purchase_account?: string;
+  purchase_description?: string;
+  preferred_vendor?: number | null;
+  track_inventory: boolean;
+  inventory_account?: string;
+  inventory_valuation_method?: string;
+  opening_stock?: number;
+  opening_stock_rate_per_unit?: number;
+  reorder_point?: number;
+}
+
 export default function NewItemPage() {
   const router = useRouter();
 
   // Units fixed list
-  const units = ["Nos", "Kgs", "Litres"];
+  const units = ["Nos", "Kgs", "Litres"] as const;
 
   // Vendors from API
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -23,7 +43,7 @@ export default function NewItemPage() {
   const [managePurchaseInfo, setManagePurchaseInfo] = useState(false);
   const [trackInventory, setTrackInventory] = useState(false);
 
-  // Form state
+  // Form state with proper initial values as strings (for form inputs)
   const [form, setForm] = useState({
     name: "",
     unit: "",
@@ -45,7 +65,6 @@ export default function NewItemPage() {
     opening_stock: "",
     opening_stock_rate_per_unit: "",
     reorder_point: "",
-
   });
 
   const [loading, setLoading] = useState(false);
@@ -54,27 +73,33 @@ export default function NewItemPage() {
   useEffect(() => {
     async function fetchVendors() {
       try {
-        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/vendors/");
+        const res = await fetchWithAuth(
+          "https://bom-front-production.up.railway.app/api/vendors/"
+        );
         if (!res.ok) throw new Error("Failed to load vendors");
         const data = await res.json();
         setVendors(data.results || []);
-      } catch (e) {
+      } catch {
         // optional: handle error or silently fail
       }
     }
     fetchVendors();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleCheckboxChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    if (field === "manageSalesInfo") setManageSalesInfo(checked);
-    else if (field === "managePurchaseInfo") setManagePurchaseInfo(checked);
-    else if (field === "trackInventory") setTrackInventory(checked);
-  };
+  const handleCheckboxChange =
+    (field: "manageSalesInfo" | "managePurchaseInfo" | "trackInventory") =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const checked = e.target.checked;
+      if (field === "manageSalesInfo") setManageSalesInfo(checked);
+      else if (field === "managePurchaseInfo") setManagePurchaseInfo(checked);
+      else if (field === "trackInventory") setTrackInventory(checked);
+    };
 
   const handleSave = async () => {
     setError("");
@@ -88,11 +113,13 @@ export default function NewItemPage() {
       return;
     }
 
-    // Compose payload conditionally based on checkboxes
-    const payload: any = {
-      name: form.name,
-      unit: form.unit,
-      
+    // Build payload with type safety and parsing numeric fields
+    const payload: NewItemPayload = {
+      name: form.name.trim(),
+      unit: form.unit as NewItemPayload["unit"],
+      manage_sales_info: manageSalesInfo,
+      manage_purchase_info: managePurchaseInfo,
+      track_inventory: trackInventory,
     };
 
     if (manageSalesInfo) {
@@ -100,12 +127,9 @@ export default function NewItemPage() {
         setError("Sales selling price is required when Sales Info enabled");
         return;
       }
-      payload.manage_sales_info = true;
-      payload.sales_selling_price = form.sales_selling_price;
+      payload.sales_selling_price = Number(form.sales_selling_price);
       payload.sales_account = form.sales_account || "Sales";
-      payload.sales_description = form.sales_description;
-    } else {
-      payload.manage_sales_info = false;
+      payload.sales_description = form.sales_description.trim();
     }
 
     if (managePurchaseInfo) {
@@ -113,37 +137,43 @@ export default function NewItemPage() {
         setError("Purchase cost price is required when Purchase Info enabled");
         return;
       }
-      payload.manage_purchase_info = true;
-      payload.purchase_cost_price = form.purchase_cost_price;
+      payload.purchase_cost_price = Number(form.purchase_cost_price);
       payload.purchase_account = form.purchase_account || "Cost of Goods Sold";
-      payload.purchase_description = form.purchase_description;
-      payload.preferred_vendor = form.preferred_vendor ? Number(form.preferred_vendor) : null;
-    } else {
-      payload.manage_purchase_info = false;
+      payload.purchase_description = form.purchase_description.trim();
+      payload.preferred_vendor = form.preferred_vendor
+        ? Number(form.preferred_vendor)
+        : null;
     }
 
     if (trackInventory) {
-      payload.track_inventory = true;
-      payload.inventory_account = form.inventory_account;
-      payload.inventory_valuation_method = form.inventory_valuation_method;
-      payload.opening_stock = form.opening_stock;
-      payload.opening_stock_rate_per_unit = form.opening_stock_rate_per_unit;
-      payload.reorder_point = form.reorder_point;
-    } else {
-      payload.track_inventory = false;
+      payload.inventory_account = form.inventory_account.trim();
+      payload.inventory_valuation_method = form.inventory_valuation_method.trim();
+      payload.opening_stock = form.opening_stock
+        ? Number(form.opening_stock)
+        : undefined;
+      payload.opening_stock_rate_per_unit = form.opening_stock_rate_per_unit
+        ? Number(form.opening_stock_rate_per_unit)
+        : undefined;
+      payload.reorder_point = form.reorder_point
+        ? Number(form.reorder_point)
+        : undefined;
     }
 
     try {
       setLoading(true);
-      const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/items/", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      const res = await fetchWithAuth(
+        "https://bom-front-production.up.railway.app/api/items/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
       if (!res.ok) {
         const errBody = await res.json();
         throw new Error(errBody.detail || "Failed to create item");
       }
-      // Success
+      // Success: redirect to items list page
       router.push("/books/items/item");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -207,13 +237,15 @@ export default function NewItemPage() {
           {manageSalesInfo && (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <label className="block font-medium text-gray-700">Selling Price (INR)<span className="text-red-500">*</span></label>
+                <label className="block font-medium text-gray-700">
+                  Selling Price (INR)<span className="text-red-500">*</span>
+                </label>
                 <input
                   type="number"
                   name="sales_selling_price"
                   value={form.sales_selling_price}
                   onChange={handleChange}
-                  className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                 />
               </div>
 
@@ -223,7 +255,7 @@ export default function NewItemPage() {
                   name="sales_account"
                   value={form.sales_account}
                   onChange={handleChange}
-                  className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                 >
                   <option value="Sales">Sales</option>
                 </select>
@@ -235,7 +267,7 @@ export default function NewItemPage() {
                   name="sales_description"
                   value={form.sales_description}
                   onChange={handleChange}
-                  className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                 />
               </div>
             </div>
@@ -256,13 +288,15 @@ export default function NewItemPage() {
           {managePurchaseInfo && (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <label className="block font-medium text-gray-700">Cost Price (INR)<span className="text-red-500">*</span></label>
+                <label className="block font-medium text-gray-700">
+                  Cost Price (INR)<span className="text-red-500">*</span>
+                </label>
                 <input
                   type="number"
                   name="purchase_cost_price"
                   value={form.purchase_cost_price}
                   onChange={handleChange}
-                  className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                 />
               </div>
 
@@ -272,7 +306,7 @@ export default function NewItemPage() {
                   name="purchase_account"
                   value={form.purchase_account}
                   onChange={handleChange}
-                  className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                 >
                   <option value="Cost of Goods Sold">Cost of Goods Sold</option>
                 </select>
@@ -294,7 +328,7 @@ export default function NewItemPage() {
                   name="preferred_vendor"
                   value={form.preferred_vendor}
                   onChange={handleChange}
-                  className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Select Vendor</option>
                   {vendors.map((v) => (
@@ -332,7 +366,7 @@ export default function NewItemPage() {
                     name="inventory_account"
                     value={form.inventory_account}
                     onChange={handleChange}
-                    className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                   >
                     <option value="">Select an account</option>
                     <option value="Inventory">Inventory</option>
@@ -345,7 +379,7 @@ export default function NewItemPage() {
                     name="inventory_valuation_method"
                     value={form.inventory_valuation_method}
                     onChange={handleChange}
-                    className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                   >
                     <option value="">Select Method</option>
                     <option value="FIFO">FIFO</option>
@@ -360,7 +394,7 @@ export default function NewItemPage() {
                     name="opening_stock"
                     value={form.opening_stock}
                     onChange={handleChange}
-                    className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                   />
                 </div>
                 <div>
@@ -370,7 +404,7 @@ export default function NewItemPage() {
                     name="opening_stock_rate_per_unit"
                     value={form.opening_stock_rate_per_unit}
                     onChange={handleChange}
-                    className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                   />
                 </div>
                 <div>
@@ -380,7 +414,7 @@ export default function NewItemPage() {
                     name="reorder_point"
                     value={form.reorder_point}
                     onChange={handleChange}
-                    className="w-full p-2 mt-2 border  border-black rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full p-2 mt-2 border border-black rounded-lg focus:ring-2 focus:ring-green-500"
                   />
                 </div>
               </div>

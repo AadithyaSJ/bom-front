@@ -3,8 +3,19 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
+interface InventoryAdjustment {
+  item: number | string; // Assuming your API returns the item ID here
+  adjustmentnumber: string;
+  date: string;          // ISO date string e.g. "2025-09-21"
+  quantity: number;
+  reason?: string;
+  notes?: string;
+  createdat: string;     // ISO datetime string
+}
+
+
 export default function InventoryAdjustmentsPage() {
-  const [adjustments, setAdjustments] = useState<any[]>([]);
+  const [adjustments, setAdjustments] = useState<InventoryAdjustment[]>([]);
 
   // Load from localStorage on mount
   useEffect(() => {

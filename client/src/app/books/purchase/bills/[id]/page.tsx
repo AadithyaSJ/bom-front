@@ -1,37 +1,54 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { fetchWithAuth } from "@/auth/tokenservice";
 import Link from "next/link";
 
+export interface VendorInfo {
+  id: string | number;
+  name?: string;
+  display_name?: string;
+  [key: string]: any;
+}
+
+export interface BillItem {
+  id: string | number;
+  name?: string;
+  item_name?: string;
+  desc?: string;
+  description?: string;
+  qty?: number;
+  quantity?: number;
+  rate?: number;
+  unit_price?: number;
+  taxPct?: number;
+  tax_percentage?: number;
+  [key: string]: any;
+}
+
+export interface BillMeta {
+  itemsExtended?: BillItem[];
+  files?: { id?: string | number; name: string }[];
+  [key: string]: any;
+}
+
 export interface Bill {
   id: string;
-
   bill_date?: string;
   bill_number?: string;
   due_date?: string;
   reference_number?: string;
-
   total_amount?: string;
-  subtotal?: number;
-  tax?: number;
+  subtotal?: number | string;
+  tax?: number | string;
   balance_due?: string;
-
   status?: string;
   notes?: string;
-
-  vendor?: any;
-  vendorSnapshot?: any;
-
-  meta?: {
-    itemsExtended?: any[];
-    files?: any[];
-  };
-
-  items?: any[];
-
+  vendor?: VendorInfo | string | null;
+  vendorSnapshot?: VendorInfo | null;
+  meta?: BillMeta;
+  items?: BillItem[];
   [key: string]: any;
 }
 
@@ -42,7 +59,6 @@ export default function BillEditPage() {
 
   const [bill, setBill] = useState<Bill | null>(null);
   const [loading, setLoading] = useState(false);
-  
 
   useEffect(() => {
     if (!billId) return;
@@ -51,7 +67,9 @@ export default function BillEditPage() {
 
     async function loadBill() {
       try {
-        const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/bills/${billId}/`);
+        const res = await fetchWithAuth(
+          `https://bom-front-production.up.railway.app/api/bills/${billId}/`
+        );
         if (res.ok) {
           const data = await res.json();
           setBill(data);
@@ -63,18 +81,18 @@ export default function BillEditPage() {
     loadBill();
   }, [billId]);
 
-  function getVendorDisplay(vendor: any, vendorSnapshot: any): string {
+  function getVendorDisplay(vendor: VendorInfo | string | null | undefined, vendorSnapshot: VendorInfo | null | undefined): string {
     if (!vendor && !vendorSnapshot) return "-";
     if (typeof vendor === "string") return vendorSnapshot?.name ?? "-";
     if (vendor && typeof vendor === "object") {
       return (
         vendor.name ??
-        [vendor.display_name].filter(Boolean).join(" ").trim() ??
+        vendor.display_name ??
         vendorSnapshot?.name ??
         "-"
       );
     }
-    if (vendorSnapshot && vendorSnapshot.name) return vendorSnapshot.name;
+    if (vendorSnapshot?.name) return vendorSnapshot.name;
     return "-";
   }
 
@@ -82,38 +100,29 @@ export default function BillEditPage() {
   if (!bill) return <div className="p-6">Bill not found.</div>;
 
   const subtotal = parseFloat(bill.subtotal as any) || 0;
-const tax = parseFloat(bill.tax as any) || 0;
-const total = parseFloat(
-  bill.total_amount ??
-  "0"
-);
-const balanceDue = parseFloat(
-  bill.balance_due ??
-  "0"
-);
-
+  const tax = parseFloat(bill.tax as any) || 0;
+  const total = parseFloat(bill.total_amount ?? "0");
+  const balanceDue = parseFloat(bill.balance_due ?? "0");
 
   return (
     <div className="p-6 max-w-5xl mx-auto bg-white rounded-xl shadow">
       <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Bill Details (View only)
-          </h1>
-          <div className="flex items-center space-x-2">
-            <Link
-              href={`/books/purchase/bills/${bill.id}/edit`}
-              className="text-white bg-green-600 hover:bg-green-700 rounded px-4 py-1 font-semibold"
-            >
-              Edit
-            </Link>
-            <button
-              className="text-green-700 border border-green-700 rounded px-4 py-1"
-              onClick={() => router.push('/books/purchase/bills')}
-            >
-              Back
-            </button>
-          </div>
+        <h1 className="text-2xl font-semibold text-gray-900">Bill Details (View only)</h1>
+        <div className="flex items-center space-x-2">
+          <Link
+            href={`/books/purchase/bills/${bill.id}/edit`}
+            className="text-white bg-green-600 hover:bg-green-700 rounded px-4 py-1 font-semibold"
+          >
+            Edit
+          </Link>
+          <button
+            className="text-green-700 border border-green-700 rounded px-4 py-1"
+            onClick={() => router.push("/books/purchase/bills")}
+          >
+            Back
+          </button>
         </div>
+      </div>
 
       {/* Bill Main Info */}
       <div className="grid gap-4 md:grid-cols-2 mb-6">
@@ -158,7 +167,7 @@ const balanceDue = parseFloat(
             </tr>
           </thead>
           <tbody>
-            {(bill.meta?.itemsExtended ?? bill.items ?? []).map((item: any, i: number) => {
+            {(bill.meta?.itemsExtended ?? bill.items ?? []).map((item: BillItem, i: number) => {
               const qty = Number(item.qty ?? item.quantity ?? 0);
               const rate = Number(item.rate ?? item.unit_price ?? 0);
               const tax = Number(item.taxPct ?? item.tax_percentage ?? 0);
@@ -187,23 +196,23 @@ const balanceDue = parseFloat(
           </div>
         </div>
         <div className="p-4 bg-emerald-50 rounded-xl">
-  <div className="flex justify-between py-1">
-    <span>Subtotal</span>
-    <span>₹ {subtotal.toFixed(2)}</span>
-  </div>
-  <div className="flex justify-between py-1">
-    <span>Tax</span>
-    <span>₹ {tax.toFixed(2)}</span>
-  </div>
-  <div className="flex justify-between py-2 mt-2 font-semibold border-t text-emerald-800">
-    <span>Total</span>
-    <span>₹ {total.toFixed(2)}</span>
-  </div>
-  <div className="flex justify-between py-1 border-t">
-    <span>Balance Due</span>
-    <span>₹ {balanceDue.toFixed(2)}</span>
-  </div>
-</div>
+          <div className="flex justify-between py-1">
+            <span>Subtotal</span>
+            <span>₹ {subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between py-1">
+            <span>Tax</span>
+            <span>₹ {tax.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between py-2 mt-2 font-semibold border-t text-emerald-800">
+            <span>Total</span>
+            <span>₹ {total.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between py-1 border-t">
+            <span>Balance Due</span>
+            <span>₹ {balanceDue.toFixed(2)}</span>
+          </div>
+        </div>
       </div>
 
       {/* Attachments */}
@@ -211,7 +220,7 @@ const balanceDue = parseFloat(
         <div className="mb-1 font-semibold text-emerald-700">Attachments</div>
         {bill.meta?.files?.length ? (
           <ul className="flex flex-wrap gap-2">
-            {bill.meta.files.map((f: any, i: number) => (
+            {bill.meta.files.map((f, i) => (
               <li
                 key={f.id ?? i}
                 className="bg-gray-100 rounded px-3 py-1 text-sm truncate"

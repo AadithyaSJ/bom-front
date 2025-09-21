@@ -5,9 +5,33 @@ import { useRouter } from "next/navigation";
 import { fetchWithAuth } from "@/auth/tokenservice";
 import { Trash2 } from "lucide-react";
 
+interface Item {
+  id: string | number;
+  name: string;
+  unit: "Nos" | "Kgs" | "Litres";   // Based on UNIT_CHOICES in Django
+  managesalesinfo: boolean;
+  salessellingprice?: number | null;
+  salesaccount: string;
+  salesdescription: string;
+  managepurchaseinfo: boolean;
+  purchasecostprice?: number | null;
+  purchaseaccount: string;
+  purchasedescription: string;
+  preferredvendor?: number | null; // Assuming foreign key represented as id
+  trackinventory: boolean;
+  inventoryaccount: string;
+  inventoryvaluationmethod: string;
+  openingstock?: number | null;
+  openingstockrateperunit?: number | null;
+  reorderpoint?: number | null;
+  currentstock: number;
+  createdat: string;  // ISO string date
+}
+
+
 export default function ItemsPage() {
   const router = useRouter();
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

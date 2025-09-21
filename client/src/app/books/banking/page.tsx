@@ -3,8 +3,41 @@ import { useRouter } from "next/navigation";
 import { fetchWithAuth } from "@/auth/tokenservice";
 import { useState, useEffect } from "react";
 
+interface BankingAccount {
+  id: string | number;
+  account_type: "bank" | "credit_card";
+  currency: string;
+  description?: string;
+  notes?: string;
+  primary: boolean;
+
+  // Bank fields (some are optional because they may be blank)
+  account_name?: string;
+  account_code?: string;
+  account_number?: string;
+  bank_name?: string;
+  ifsc?: string;
+  opening_balance?: number | null;
+  current_balance: number;
+
+  // Credit card fields (optional where blank)
+  card_number?: string;
+  card_holder_name?: string;
+  expiry_date?: string | null; // ISO date string expected from API
+  credit_limit?: number | null;
+  issuing_bank?: string;
+  statement_day?: number | null;
+  payment_due_day?: number | null;
+  opening_outstanding?: number | null;
+  current_outstanding: number;
+
+  created_at: string;  // ISO datetime string from API
+  updated_at: string;
+}
+
+
 export default function BankingOnePage() {
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<BankingAccount[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const router = useRouter();
 
