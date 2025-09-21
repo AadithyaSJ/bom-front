@@ -1,122 +1,229 @@
-// "use client";
+"use client";
 
-// import { useEffect, useMemo, useState } from "react";
-// import { useParams, useRouter } from "next/navigation";
-// import { storage } from "../component/storage";
-// import { Bill } from "../component/types";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { fetchWithAuth } from "@/auth/tokenservice";
+import Link from "next/link";
 
-// export default function BillDetailPage() {
-//   const params = useParams<{ id: string }>();
-//   const router = useRouter();
-//   const [bill, setBill] = useState<Bill | null>(null);
+export interface Bill {
+  id: string;
 
-//   useEffect(() => {
-//     const all = storage.getBills();
-//     setBill(all.find((b) => b.id === params.id) || null);
-//   }, [params.id]);
+  bill_date?: string;
+  bill_number?: string;
+  due_date?: string;
+  reference_number?: string;
 
-//   const currency = (n: number) => `₹ ${n.toFixed(2)}`;
+  total_amount?: string;
+  subtotal?: number;
+  tax?: number;
+  balance_due?: string;
 
-//   const totals = useMemo(() => {
-//     if (!bill) return { subtotal: 0, tax: 0, total: 0 };
-//     return { subtotal: bill.amount, tax: bill.tax ?? 0, total: bill.total };
-//   }, [bill]);
+  status?: string;
+  notes?: string;
 
-//   if (!bill) {
-//     return (
-//       <div className="p-6">
-//         <button onClick={() => router.push("/purchase/bills")}
-//                 className="px-3 py-1 mb-4 bg-gray-100 rounded-xl hover:bg-gray-200">
-//           ← Back
-//         </button>
-//         <p>Bill not found.</p>
-//       </div>
-//     );
-//   }
+  vendor?: any;
+  vendorSnapshot?: any;
 
-//   return (
-//     <div className="p-4 space-y-4 md:p-6">
-//       <div className="flex items-center justify-between">
-//         <button onClick={() => router.push("/purchase/bills")}
-//                 className="px-3 py-1 bg-gray-100 rounded-xl hover:bg-gray-200">
-//           ← All Bills
-//         </button>
-//         <button onClick={() => window.print()}
-//                 className="px-4 py-2 text-white rounded-xl bg-emerald-600 hover:bg-emerald-700">
-//           Print / Download
-//         </button>
-//       </div>
+  meta?: {
+    itemsExtended?: any[];
+    files?: any[];
+  };
 
-//       {/* Bill Header */}
-//       <div className="p-6 bg-white shadow rounded-2xl">
-//         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-//           <div>
-//             <h1 className="text-2xl font-bold text-emerald-700">Bill #{bill.billNo}</h1>
-//             <p className="text-sm text-gray-500">Ref: {bill.referenceNumber || "-"}</p>
-//             <p className="text-sm text-gray-500">Status: <span className="font-semibold">{bill.status}</span></p>
-//           </div>
-//           <div className="text-sm">
-//             <p><span className="text-gray-500">Bill Date:</span> {bill.date}</p>
-//             <p><span className="text-gray-500">Due Date:</span> {bill.dueDate || "-"}</p>
-//           </div>
-//         </div>
+  items?: any[];
 
-//         {/* Vendor */}
-//         <div className="grid gap-4 pt-4 mt-4 border-t md:grid-cols-2">
-//           <div>
-//             <h3 className="font-semibold text-emerald-700">Vendor</h3>
-//             <p>{bill.vendorSnapshot.name}</p>
-//             {bill.vendorSnapshot.address && <p className="text-sm text-gray-600">{bill.vendorSnapshot.address}</p>}
-//             {bill.vendorSnapshot.email && <p className="text-sm text-gray-600">{bill.vendorSnapshot.email}</p>}
-//             {bill.vendorSnapshot.phone && <p className="text-sm text-gray-600">{bill.vendorSnapshot.phone}</p>}
-//           </div>
-//           <div className="md:text-right">
-//             <h3 className="font-semibold text-emerald-700">Amounts</h3>
-//             <p>Subtotal: {currency(totals.subtotal)}</p>
-//             <p>Tax: {currency(totals.tax)}</p>
-//             <p className="text-lg font-semibold">Total: {currency(totals.total)}</p>
-//             <p className="text-sm text-gray-600">Balance Due: {currency(bill.balanceDue)}</p>
-//           </div>
-//         </div>
+  [key: string]: any;
+}
 
-//         {/* Items */}
-//         <div className="mt-6 overflow-x-auto">
-//           <table className="min-w-full border rounded-xl">
-//             <thead className="bg-emerald-50">
-//               <tr className="text-left">
-//                 <th className="p-3">Item</th>
-//                 <th className="p-3 w-28">Qty</th>
-//                 <th className="w-32 p-3">Rate</th>
-//                 <th className="w-32 p-3">Amount</th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {bill.items.map((it) => {
-//                 const amt = it.qty * it.rate;
-//                 return (
-//                   <tr key={it.id} className="border-t">
-//                     <td className="p-3">{it.name}</td>
-//                     <td className="p-3">{it.qty}</td>
-//                     <td className="p-3">{currency(it.rate)}</td>
-//                     <td className="p-3">{currency(amt)}</td>
-//                   </tr>
-//                 );
-//               })}
-//               <tr className="border-t">
-//                 <td colSpan={3} className="p-3 font-semibold text-right">Total</td>
-//                 <td className="p-3 font-semibold">{currency(totals.total)}</td>
-//               </tr>
-//             </tbody>
-//           </table>
-//         </div>
+export default function BillEditPage() {
+  const params = useParams();
+  const billId = params?.id ?? null;
+  const router = useRouter();
 
-//         {bill.notes && (
-//           <div className="mt-4">
-//             <h4 className="font-semibold text-emerald-700">Notes</h4>
-//             <p className="text-sm text-gray-700 whitespace-pre-wrap">{bill.notes}</p>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
+  const [bill, setBill] = useState<Bill | null>(null);
+  const [loading, setLoading] = useState(false);
+  
+
+  useEffect(() => {
+    if (!billId) return;
+    setLoading(true);
+    setBill(null);
+
+    async function loadBill() {
+      try {
+        const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/bills/${billId}/`);
+        if (res.ok) {
+          const data = await res.json();
+          setBill(data);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadBill();
+  }, [billId]);
+
+  function getVendorDisplay(vendor: any, vendorSnapshot: any): string {
+    if (!vendor && !vendorSnapshot) return "-";
+    if (typeof vendor === "string") return vendorSnapshot?.name ?? "-";
+    if (vendor && typeof vendor === "object") {
+      return (
+        vendor.name ??
+        [vendor.display_name].filter(Boolean).join(" ").trim() ??
+        vendorSnapshot?.name ??
+        "-"
+      );
+    }
+    if (vendorSnapshot && vendorSnapshot.name) return vendorSnapshot.name;
+    return "-";
+  }
+
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (!bill) return <div className="p-6">Bill not found.</div>;
+
+  const subtotal = parseFloat(bill.subtotal as any) || 0;
+const tax = parseFloat(bill.tax as any) || 0;
+const total = parseFloat(
+  bill.total_amount ??
+  "0"
+);
+const balanceDue = parseFloat(
+  bill.balance_due ??
+  "0"
+);
+
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto bg-white rounded-xl shadow">
+      <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Bill Details (View only)
+          </h1>
+          <div className="flex items-center space-x-2">
+            <Link
+              href={`/books/purchase/bills/${bill.id}/edit`}
+              className="text-white bg-green-600 hover:bg-green-700 rounded px-4 py-1 font-semibold"
+            >
+              Edit
+            </Link>
+            <button
+              className="text-green-700 border border-green-700 rounded px-4 py-1"
+              onClick={() => router.push('/books/purchase/bills')}
+            >
+              Back
+            </button>
+          </div>
+        </div>
+
+      {/* Bill Main Info */}
+      <div className="grid gap-4 md:grid-cols-2 mb-6">
+        <div>
+          <div className="text-sm text-gray-600">Vendor</div>
+          <div className="font-medium">{getVendorDisplay(bill.vendor, bill.vendorSnapshot)}</div>
+        </div>
+        <div>
+          <div className="text-sm text-gray-600">Bill #</div>
+          <div className="font-medium">{bill.bill_number ?? bill.billNo ?? bill.billNumber ?? "-"}</div>
+        </div>
+        <div>
+          <div className="text-sm text-gray-600">Status</div>
+          <div className="font-medium">{bill.status ?? "-"}</div>
+        </div>
+        <div>
+          <div className="text-sm text-gray-600">Date</div>
+          <div className="font-medium">{bill.bill_date ?? bill.billDate ?? bill.date ?? "-"}</div>
+        </div>
+        <div>
+          <div className="text-sm text-gray-600">Due Date</div>
+          <div className="font-medium">{bill.dueDate ?? bill.due_date ?? "-"}</div>
+        </div>
+        <div>
+          <div className="text-sm text-gray-600">Reference #</div>
+          <div className="font-medium">{bill.referenceNumber ?? bill.reference_number ?? "-"}</div>
+        </div>
+      </div>
+
+      {/* Bill Items */}
+      <div className="mb-6">
+        <div className="font-semibold text-emerald-700 mb-2">Items</div>
+        <table className="w-full border rounded-xl overflow-x-auto">
+          <thead className="bg-emerald-50">
+            <tr className="text-sm text-left text-emerald-800">
+              <th className="p-3">Item</th>
+              <th className="p-3">Description</th>
+              <th className="p-3">Qty</th>
+              <th className="p-3">Rate</th>
+              <th className="p-3">Tax %</th>
+              <th className="p-3">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(bill.meta?.itemsExtended ?? bill.items ?? []).map((item: any, i: number) => {
+              const qty = Number(item.qty ?? item.quantity ?? 0);
+              const rate = Number(item.rate ?? item.unit_price ?? 0);
+              const tax = Number(item.taxPct ?? item.tax_percentage ?? 0);
+              const amount = qty * rate * (1 + tax / 100);
+              return (
+                <tr key={item.id ?? i} className="border-t">
+                  <td className="p-2">{item.name ?? item.item_name ?? "-"}</td>
+                  <td className="p-2">{item.desc ?? item.description ?? "-"}</td>
+                  <td className="p-2">{qty}</td>
+                  <td className="p-2">{rate.toFixed(2)}</td>
+                  <td className="p-2">{tax}</td>
+                  <td className="p-2">₹ {amount.toFixed(2)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Totals and Notes */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div>
+          <div className="mb-2 text-sm text-gray-600">Notes</div>
+          <div className="p-3 bg-gray-50 border rounded">
+            {bill.notes ?? <span className="text-gray-400 italic">No notes</span>}
+          </div>
+        </div>
+        <div className="p-4 bg-emerald-50 rounded-xl">
+  <div className="flex justify-between py-1">
+    <span>Subtotal</span>
+    <span>₹ {subtotal.toFixed(2)}</span>
+  </div>
+  <div className="flex justify-between py-1">
+    <span>Tax</span>
+    <span>₹ {tax.toFixed(2)}</span>
+  </div>
+  <div className="flex justify-between py-2 mt-2 font-semibold border-t text-emerald-800">
+    <span>Total</span>
+    <span>₹ {total.toFixed(2)}</span>
+  </div>
+  <div className="flex justify-between py-1 border-t">
+    <span>Balance Due</span>
+    <span>₹ {balanceDue.toFixed(2)}</span>
+  </div>
+</div>
+      </div>
+
+      {/* Attachments */}
+      <div>
+        <div className="mb-1 font-semibold text-emerald-700">Attachments</div>
+        {bill.meta?.files?.length ? (
+          <ul className="flex flex-wrap gap-2">
+            {bill.meta.files.map((f: any, i: number) => (
+              <li
+                key={f.id ?? i}
+                className="bg-gray-100 rounded px-3 py-1 text-sm truncate"
+              >
+                {f.name}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="italic text-gray-500">No attachments</div>
+        )}
+      </div>
+    </div>
+  );
+}

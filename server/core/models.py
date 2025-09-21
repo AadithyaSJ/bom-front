@@ -938,6 +938,7 @@ class Invoice(models.Model):
         ("PAID", "Paid"),
         ("PARTIAL", "Partial"),
         ("CANCELLED", "Cancelled"),
+        ("SENT", "Sent")
     ]
 
     due_date = models.DateField(null=True, blank=True, db_index=True)

@@ -352,10 +352,10 @@ export default function NewVendorPage() {
               onChange={(e) => setSalutation(e.target.value)}
             >
               <option value="">Select</option>
-  <option value="dr">Dr</option>
-  <option value="mr">Mr</option>
-  <option value="ms">Ms</option>
-  <option value="mrs">Mrs</option>
+              <option value="dr">Dr</option>
+              <option value="mr">Mr</option>
+              <option value="ms">Ms</option>
+              <option value="mrs">Mrs</option>
             </select>
           </div>
           <div>

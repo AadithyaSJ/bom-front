@@ -8,7 +8,7 @@ import { fetchWithAuth } from "@/auth/tokenservice";
 
 type Vendor = {
   id: number;
-  first_name: string;
+  display_name: string;
   company_name: string;
   email: string;
   mobile: string;
@@ -127,7 +127,7 @@ export default function VendorsPage() {
                       href={`/books/purchase/vendors/${v.id}`}
                       className="hover:underline"
                     >
-                      {v.first_name}
+                      {v.display_name}
                     </Link>
                   </td>
                   <td className="px-4 py-3">{v.company_name}</td>
