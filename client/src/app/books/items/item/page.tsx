@@ -39,7 +39,7 @@ export default function ItemsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/items/");
+      const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/items/");
 
       if (!res.ok) {
         throw new Error("Failed to fetch items");
@@ -58,7 +58,7 @@ export default function ItemsPage() {
 
     try {
       const res = await fetchWithAuth(
-        `https://bom-front-production.up.railway.app/api/items/${id}/`,
+        `https://web-production-6baf3.up.railway.app/api/items/${id}/`,
         { method: "DELETE" }
       );
 

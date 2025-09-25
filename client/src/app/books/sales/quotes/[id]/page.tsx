@@ -112,7 +112,7 @@ export default function QuoteDetailPage() {
     async function fetchQuote() {
       try {
         const res = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/quotes/${id}/`
+          `https://web-production-6baf3.up.railway.app/api/quotes/${id}/`
         );
         if (!res.ok) throw new Error("Failed to fetch quote data");
         const data: Quote = await res.json();
@@ -123,7 +123,7 @@ export default function QuoteDetailPage() {
         ));
 
         const itemPromises: Promise<Item>[] = itemIds.map(async (itemId: number): Promise<Item> => {
-          const resItem = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/items/${itemId}/`);
+          const resItem = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/items/${itemId}/`);
           if (!resItem.ok) throw new Error(`Failed to fetch item ${itemId}`);
           const itemData: Item = await resItem.json();
           return itemData;

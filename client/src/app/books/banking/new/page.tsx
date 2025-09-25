@@ -55,7 +55,7 @@ export default function AddBankPage() {
 
     try {
       setLoading(true);
-      const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/banking/banking-accounts/", {
+      const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/banking/banking-accounts/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

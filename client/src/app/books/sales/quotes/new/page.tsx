@@ -139,7 +139,7 @@ export default function NewQuote() {
   useEffect(() => {
     async function loadCustomers() {
       try {
-        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/customers/");
+        const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/customers/");
         if (!res.ok) throw new Error("Failed to fetch customers");
         const data = await res.json();
         setCustomers(data.results || []);
@@ -157,7 +157,7 @@ export default function NewQuote() {
   useEffect(() => {
     async function loadItems() {
       try {
-        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/items/");
+        const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/items/");
         if (!res.ok) throw new Error("Failed to fetch items");
         const data = await res.json();
         setItemsList(data.results || []);
@@ -179,7 +179,7 @@ console.log(itemsList);
   }
   async function fetchCustomerDetails() {
     try {
-      const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/customers/${selectedCustomerId}/`);
+      const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/customers/${selectedCustomerId}/`);
       if (!res.ok) throw new Error("Failed to fetch customer details");
       const data = await res.json();
       setCustomer(data);
@@ -267,7 +267,7 @@ console.log(itemsList);
     };
 
     try {
-      const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/quotes/", {
+      const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/quotes/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

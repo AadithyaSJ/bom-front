@@ -12,6 +12,26 @@ type CustomerType = {
   company_name?: string;
 };
 
+interface Invoice {
+  id: number;
+  invoice_number: string;
+  invoice_date: string;  // ISO date string
+  total_amount: string;  // Decimal fields may be represented as strings
+  status: "DRAFT" | "SENT" | "PAID" | "CANCELLED" | "PARTIAL" | "OVERDUE";
+  // Add any other fields you expect from API response:
+  customer?: {
+    id: number;
+    display_name: string;
+    email?: string;
+    // other customer fields if needed
+  };
+  // Optional nested fields:
+  related_items_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+
 type ChallanStatus = "draft" | "issued" | "dispatched" | "delivered" | "cancelled" | "returned";
 
 type InvoiceStatus = "DRAFT" | "SENT" | "PAID" | "CANCELLED" | "PARTIAL" | "OVERDUE";
@@ -33,7 +53,7 @@ type Challan = {
 
 export default function ChallanPage() {
   const [challans, setChallans] = useState<Challan[]>([]);
-  const [invoices, setInvoices] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -52,7 +72,7 @@ export default function ChallanPage() {
   useEffect(() => {
     async function loadInvoices() {
       try {
-        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/invoices/");
+  const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/invoices/");
         if (!res.ok) throw new Error("Failed to fetch invoices");
         const data = await res.json();
         setInvoices(data.results || []);
@@ -67,7 +87,7 @@ export default function ChallanPage() {
     setLoading(true);
     setError("");
     try {
-      const apiUrl = url || `https://bom-front-production.up.railway.app/api/deliverychallans/?page=${pageNumber}`;
+  const apiUrl = url || `https://web-production-6baf3.up.railway.app/api/deliverychallans/?page=${pageNumber}`;
       const res = await fetchWithAuth(apiUrl);
       if (!res.ok) throw new Error("Failed to fetch challans");
       const data = await res.json();
@@ -120,7 +140,7 @@ export default function ChallanPage() {
     const newStatus = editingChallanStatusIds[id];
     if (!newStatus) return;
     try {
-      const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/deliverychallans/${id}/`, {
+  const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/deliverychallans/${id}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -146,7 +166,7 @@ export default function ChallanPage() {
     const newStatus = editingInvoiceStatusIds[id];
     if (!newStatus) return;
     try {
-      const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/invoices/${id}/`, {
+  const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/invoices/${id}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),

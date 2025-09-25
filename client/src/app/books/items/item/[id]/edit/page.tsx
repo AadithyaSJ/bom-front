@@ -85,13 +85,13 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     async function fetchItem() {
       try {
         const res = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/items/${id}/`
+          `https://web-production-6baf3.up.railway.app/api/items/${id}/`
         );
         if (!res.ok) throw new Error("Failed to fetch item data");
         const data = await res.json();
         setItem(data);
         const vRes = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/vendors/`
+          `https://web-production-6baf3.up.railway.app/api/vendors/`
         );
         if (!vRes.ok) throw new Error("Failed to fetch vendors");
         const vData = await vRes.json();
@@ -110,7 +110,7 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     setSaving(true);
     try {
       const res = await fetchWithAuth(
-        `https://bom-front-production.up.railway.app/api/items/${id}/`,
+        `https://web-production-6baf3.up.railway.app/api/items/${id}/`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

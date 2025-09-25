@@ -43,13 +43,13 @@ export default function ItemDetailPage() {
     async function fetchItem() {
       try {
         const res = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/items/${id}/`
+          `https://web-production-6baf3.up.railway.app/api/items/${id}/`
         );
         if (!res.ok) throw new Error("Failed to fetch item data");
         const data: Item = await res.json();
 
         const resVendors = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/vendors/`
+          `https://web-production-6baf3.up.railway.app/api/vendors/`
         );
         if (!resVendors.ok) throw new Error("Failed to fetch vendors");
         const vendorData = await resVendors.json();

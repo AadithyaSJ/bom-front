@@ -44,7 +44,7 @@ export default function BankingOnePage() {
   useEffect(() => {
     async function loadAccounts() {
       try {
-        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/banking/banking-accounts/");
+        const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/banking/banking-accounts/");
         if (res.ok) {
           const data = await res.json();
           setAccounts(data.results || []);

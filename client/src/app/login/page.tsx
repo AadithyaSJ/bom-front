@@ -15,7 +15,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch(`https://bom-front-production.up.railway.app/api/auth/token/`, {
+  const res = await fetch(`https://web-production-6baf3.up.railway.app/api/auth/token/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

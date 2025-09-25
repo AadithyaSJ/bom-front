@@ -42,7 +42,7 @@ export default function NewTransactionPage() {
 
     try {
       setLoading(true);
-      const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/banking/transactions/", {
+  const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/banking/transactions/", {
         method: "POST",
         body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },

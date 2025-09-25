@@ -116,7 +116,7 @@ export default function ViewVendorPage() {
     setError("");
     async function fetchVendor() {
       try {
-        const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/vendors/${vendorId}/`);
+        const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/vendors/${vendorId}/`);
         if (!res.ok) throw new Error("Failed to fetch vendor");
         const data: Vendor = await res.json();
         setVendor(data);

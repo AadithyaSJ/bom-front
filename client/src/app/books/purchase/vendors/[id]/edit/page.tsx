@@ -193,7 +193,7 @@ export default function EditVendorPage() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/vendors/${vendorId}/`);
+        const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/vendors/${vendorId}/`);
         if (!res.ok) throw new Error("Failed to fetch vendor");
         const data: Vendor = await res.json();
 
@@ -356,7 +356,7 @@ export default function EditVendorPage() {
       remarks,
     };
     try {
-      const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/vendors/${vendorId}/`, {
+      const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/vendors/${vendorId}/`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

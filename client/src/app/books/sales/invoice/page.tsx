@@ -36,7 +36,7 @@ export default function InvoiceListPage() {
   const [editingStatusIds, setEditingStatusIds] = useState<Record<string, InvoiceStatus>>({});
   
 
-  const baseApiUrl = "https://bom-front-production.up.railway.app/api/invoices/";
+  const baseApiUrl = "https://web-production-6baf3.up.railway.app/api/invoices/";
 
   const statusOptions: InvoiceStatus[] = ["DRAFT", "SENT" , "PAID" , "CANCELLED" , "ACCEPTED"];
   

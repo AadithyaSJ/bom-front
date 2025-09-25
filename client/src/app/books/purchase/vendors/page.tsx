@@ -23,7 +23,7 @@ export default function VendorsPage() {
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
 
   const baseApiUrl =
-    "https://bom-front-production.up.railway.app/api/vendors/";
+    "https://web-production-6baf3.up.railway.app/api/vendors/";
 
   async function loadVendors(url?: string, pageNumber = 1) {
     setLoading(true);

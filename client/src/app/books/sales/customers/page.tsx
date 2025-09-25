@@ -24,7 +24,7 @@ export default function CustomersPage() {
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
 
   const baseApiUrl =
-    "https://bom-front-production.up.railway.app/api/customers/";
+    "https://web-production-6baf3.up.railway.app/api/customers/";
 
   async function loadCustomers(url?: string, pageNumber = 1) {
     setLoading(true);

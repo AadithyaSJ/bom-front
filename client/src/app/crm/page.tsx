@@ -19,7 +19,7 @@ export default function CRMPage() {
   
         try {
           // Attempt silent refresh of access token
-          const res = await fetch("https://bom-front-production.up.railway.app/api/auth/token/refresh/", {
+          const res = await fetch("https://web-production-6baf3.up.railway.app/api/auth/token/refresh/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ refresh: refreshToken }),

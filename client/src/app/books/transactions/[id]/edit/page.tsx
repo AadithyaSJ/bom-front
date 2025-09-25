@@ -47,7 +47,7 @@ export default function EditTransactionPage() {
       setLoading(true);
       try {
         const res = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/banking/transactions/${id}/`
+          `https://web-production-6baf3.up.railway.app/api/banking/transactions/${id}/`
         );
         if (!res.ok) {
           setTransaction(null);
@@ -109,7 +109,7 @@ export default function EditTransactionPage() {
     try {
       setSubmitting(true);
       const res = await fetchWithAuth(
-        `https://bom-front-production.up.railway.app/api/banking/transactions/${id}/`,
+  `https://web-production-6baf3.up.railway.app/api/banking/transactions/${id}/`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

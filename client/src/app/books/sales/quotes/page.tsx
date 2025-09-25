@@ -43,7 +43,7 @@ export default function QuotesPage() {
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
 
-  const baseApiUrl = "https://bom-front-production.up.railway.app/api/quotes/";
+  const baseApiUrl = "https://web-production-6baf3.up.railway.app/api/quotes/";
 
   async function loadQuotes(url?: string, pageNumber = 1) {
     setLoading(true);

@@ -33,7 +33,7 @@ export default function TransactionDetailPage() {
     async function fetchTransaction() {
       setLoading(true);
       try {
-        const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/banking/transactions/${id}/`);
+  const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/banking/transactions/${id}/`);
         if (!res.ok) throw new Error("Transaction not found");
         const data = await res.json();
         setTransaction(data);

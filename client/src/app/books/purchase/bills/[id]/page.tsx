@@ -77,7 +77,7 @@ export default function BillDetails() {
       setLoading(true);
       try {
         const res = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/bills/${billId}`,
+          `https://web-production-6baf3.up.railway.app/api/bills/${billId}`,
           { method: "GET" }
         );
         if (!res.ok) throw new Error("Failed to fetch bill");

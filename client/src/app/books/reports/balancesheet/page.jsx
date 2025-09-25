@@ -71,7 +71,7 @@ export default function BalanceSheetPage() {
     // Fix spelling for accrual, if using user-select
     const basisParam =
       reportBasis.toLowerCase() === "accrual" ? "Accrual" : "Cash";
-    const url = `https://bom-front-production.up.railway.app/api/reports/balance-sheet/?time=${encodeURIComponent(asOfDate)}&basis=${basisParam}`;
+    const url = `https://web-production-6baf3.up.railway.app/api/reports/balance-sheet/?time=${encodeURIComponent(asOfDate)}&basis=${basisParam}`;
 
     fetchWithAuth(url)
       .then((res) => {

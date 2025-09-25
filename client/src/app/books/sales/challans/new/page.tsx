@@ -81,7 +81,7 @@ export default function NewChallanPage() {
     async function fetchCustomers() {
       try {
         const res = await fetchWithAuth(
-          "https://bom-front-production.up.railway.app/api/customers/"
+          "https://web-production-6baf3.up.railway.app/api/customers/"
         );
         const data = await res.json();
         setCustomers(data.results || []);
@@ -97,7 +97,7 @@ export default function NewChallanPage() {
     async function fetchItems() {
       try {
         const res = await fetchWithAuth(
-          "https://bom-front-production.up.railway.app/api/items/"
+          "https://web-production-6baf3.up.railway.app/api/items/"
         );
         const data = await res.json();
         setItemsList(data.results || []);
@@ -117,7 +117,7 @@ export default function NewChallanPage() {
     async function loadCustomer() {
       try {
         const res = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/customers/${selectedCustomerId}/`
+          `https://web-production-6baf3.up.railway.app/api/customers/${selectedCustomerId}/`
         );
         const data = await res.json();
         setCustomer(data);
@@ -255,7 +255,7 @@ const updateItemSelection = (idx: number, itemId: number) => {
     };
     try {
       const res = await fetchWithAuth(
-        "https://bom-front-production.up.railway.app/api/deliverychallans/",
+        "https://web-production-6baf3.up.railway.app/api/deliverychallans/",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

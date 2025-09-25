@@ -88,7 +88,7 @@ export default function ChallanDetailPage() {
     async function fetchChallan() {
       try {
         const res = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/deliverychallans/${id}/`
+          `https://web-production-6baf3.up.railway.app/api/deliverychallans/${id}/`
         );
         if (!res.ok) throw new Error("Failed to fetch challan data");
         const data: Challan = await res.json();

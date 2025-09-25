@@ -27,13 +27,12 @@ type TabKey =
 type ContactPerson = {
   id?: number;
   salutation: string;
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  workPhone: string;
+  work_phone: string;
   mobile: string;
 };
-
 type Address = {
   attention: string;
   country: string;
@@ -45,6 +44,7 @@ type Address = {
   phone: string;
   fax: string;
 };
+
 
 type FileMeta = { name: string; size: number; type: string };
 
@@ -60,10 +60,12 @@ const PAYMENT_TERMS = [
 ];
 
 // Helper to clean empty string fields from an object
-function cleanObject(obj: any) {
-  const copy: any = {};
+function cleanObject<T extends Record<string, string>>(obj: T): T {
+  const copy = {} as T;
   Object.entries(obj).forEach(([k, v]) => {
-    if (v !== "") copy[k] = v;
+    if (v !== "") {
+      copy[k as keyof T] = v;
+    }
   });
   return copy;
 }
@@ -122,10 +124,10 @@ export default function EditCustomerPage() {
   const [contactPersons, setContactPersons] = useState<ContactPerson[]>([
     {
       salutation: "",
-      firstName: "",
-      lastName: "",
+      first_name: "",
+      last_name: "",
       email: "",
-      workPhone: "",
+      work_phone: "",
       mobile: "",
     },
   ]);
@@ -147,7 +149,7 @@ export default function EditCustomerPage() {
       setIsLoading(true);
       try {
         const res = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/customers/${id}/`
+          `https://web-production-6baf3.up.railway.app/api/customers/${id}/`
         );
         if (res.ok) {
           const data = await res.json();
@@ -193,31 +195,30 @@ export default function EditCustomerPage() {
           });
 
           setContactPersons(
-            Array.isArray(data.contact_persons) && data.contact_persons.length > 0
-              ? data.contact_persons.map((cp: any) => ({
-                  id:cp.id,
-                  salutation: cp.salutation || "",
-                  firstName: cp.first_name || "",
-                  lastName: cp.last_name || "",
-                  email: cp.email || "",
-                  workPhone: cp.work_phone || "",
-                  mobile: cp.mobile || "",
-                }))
-              : [
-                  {
-                    salutation: "",
-                    firstName: "",
-                    lastName: "",
-                    email: "",
-                    workPhone: "",
-                    mobile: "",
-                  },
-                ]
-          );
+  Array.isArray(data.contactPersons) && data.contactPersons.length > 0
+    ? data.contactPersons.map((cp: ContactPerson) => ({
+      id: cp.id,
+      salutation: cp.salutation || "",
+      firstName: cp.first_name || "",
+      lastName: cp.last_name || "",
+      email: cp.email || "",
+      workPhone: cp.work_phone || "",
+      mobile: cp.mobile || "",
+    }))
+    : [{
+      id: 0,
+      salutation: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      workPhone: "",
+      mobile: "",
+    }]
+);
 
           setCustomFields(
-            Array.isArray(data.custom_fields)
-              ? data.custom_fields.map((cf: any) => ({ key: cf.key || "", value: cf.value || "" }))
+            Array.isArray(data.customFields)
+              ? data.customFields.map((cf: CustomField) => ({ key: cf.key, value: cf.value }))
               : [{ key: "", value: "" }]
           );
 
@@ -268,10 +269,10 @@ export default function EditCustomerPage() {
       ...arr,
       {
         salutation: "",
-        firstName: "",
-        lastName: "",
+        first_name: "",
+        last_name: "",
         email: "",
-        workPhone: "",
+        work_phone: "",
         mobile: "",
       },
     ]);
@@ -338,10 +339,10 @@ export default function EditCustomerPage() {
     const contactPersonsPayload = contactPersons.map((cp) => ({
       id: cp.id,
       salutation: cp.salutation ? cp.salutation.toLowerCase() : null,
-      first_name: cp.firstName,
-      last_name: cp.lastName,
+      first_name: cp.first_name,
+      last_name: cp.last_name,
       email: cp.email,
-      work_phone: cp.workPhone,
+      work_phone: cp.work_phone,
       mobile: cp.mobile,
     }));
 
@@ -386,7 +387,7 @@ export default function EditCustomerPage() {
 
     try {
       const res = await fetchWithAuth(
-        `https://bom-front-production.up.railway.app/api/customers/${id}/`,
+  `https://web-production-6baf3.up.railway.app/api/customers/${id}/`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -830,18 +831,18 @@ export default function EditCustomerPage() {
                               <td className="px-3 py-2">
                                 <input
                                   className="w-full px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                                  value={cp.firstName}
+                                  value={cp.first_name}
                                   onChange={(e) =>
-                                    updateCP(idx, { firstName: e.target.value })
+                                    updateCP(idx, { first_name: e.target.value })
                                   }
                                 />
                               </td>
                               <td className="px-3 py-2">
                                 <input
                                   className="w-full px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                                  value={cp.lastName}
+                                  value={cp.last_name}
                                   onChange={(e) =>
-                                    updateCP(idx, { lastName: e.target.value })
+                                    updateCP(idx, { last_name: e.target.value })
                                   }
                                 />
                               </td>
@@ -861,9 +862,9 @@ export default function EditCustomerPage() {
                                   <FaPhone className="mr-2 text-green-500" />
                                   <input
                                     className="w-full py-1 outline-none"
-                                    value={cp.workPhone}
+                                    value={cp.work_phone}
                                     onChange={(e) =>
-                                      updateCP(idx, { workPhone: e.target.value })
+                                      updateCP(idx, { work_phone: e.target.value })
                                     }
                                   />
                                 </div>

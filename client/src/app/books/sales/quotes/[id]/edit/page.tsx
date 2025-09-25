@@ -6,6 +6,14 @@ import { fetchWithAuth } from "@/auth/tokenservice";
 
 type ItemRow = { id: string; itemId?: string; name: string; qty: number; rate: number };
 
+type Item = {
+  id: string;         // Unique identifier for the item row
+  itemId?: string;    // Optional ID linking to the master item record
+  name: string;       // Name/description of the item
+  qty: number;        // Quantity of this item
+  rate: number;       // Rate or price per unit of the item
+};
+
 const STORAGE_KEY = "quotes";
 
 export default function EditQuotePage() {
@@ -44,13 +52,13 @@ export default function EditQuotePage() {
   useEffect(() => {
     async function fetchItems() {
       try {
-        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/items/");
+        const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/items/");
         if (!res.ok) throw new Error("Failed to fetch items");
         const data = await res.json();
         // Adjust this if your API returns paginated structure
         const itemsArray = Array.isArray(data) ? data : data.results || [];
         const map: Record<string, string> = {};
-        itemsArray.forEach((item: any) => {
+        itemsArray.forEach((item: Item) => {
           map[item.id.toString()] = item.name;
         });
         setItemMap(map);
@@ -95,7 +103,7 @@ export default function EditQuotePage() {
       setError("");
       try {
         const res = await fetchWithAuth(
-          `https://bom-front-production.up.railway.app/api/quotes/${id}/`
+          `https://web-production-6baf3.up.railway.app/api/quotes/${id}/`
         );
         if (!res.ok) throw new Error(`Failed to fetch quote: ${res.status}`);
         const data = await res.json();
@@ -132,19 +140,19 @@ export default function EditQuotePage() {
         // Map item details using itemMap for name
         if (Array.isArray(data.item_details) && data.item_details.length > 0) {
           setItems(
-            data.item_details.map((item: any) => ({
+            data.item_details.map((item: Item) => ({
               id: item.id?.toString() || crypto.randomUUID(),
-              itemId: item.item_id?.toString() || undefined,
-              name: itemMap[item.item_id?.toString() || ""] || "",
-              qty: item.quantity || 1,
+              itemId: item.id?.toString() || undefined,
+              name: itemMap[item.id?.toString() || ""] || "",
+              qty: item.qty || 1,
               rate: Number(item.rate) || 0,
             }))
           );
         } else {
           setItems([{ id: crypto.randomUUID(), name: "", qty: 1, rate: 0 }]);
         }
-      } catch (err: any) {
-        setError(err.message || "Failed to load quote");
+      } catch (e) {
+        alert(e);
       } finally {
         setLoading(false);
       }
@@ -201,7 +209,7 @@ export default function EditQuotePage() {
     };
 
     try {
-      const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/quotes/${id}/`, {
+      const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/quotes/${id}/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

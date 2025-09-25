@@ -40,7 +40,7 @@ export default function NewBillPage() {
   useEffect(() => {
     async function fetchVendors() {
       try {
-        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/vendors/");
+        const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/vendors/");
         if (!res.ok) throw new Error("Failed to fetch vendors");
 
         const data = await res.json();
@@ -117,7 +117,7 @@ export default function NewBillPage() {
     };
 
     try {
-      const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/bills/", {
+      const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/bills/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

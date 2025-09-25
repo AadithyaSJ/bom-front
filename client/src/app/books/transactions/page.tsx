@@ -28,7 +28,7 @@ export default function TransactionsPage() {
     async function loadTransactions() {
       setLoading(true);
       try {
-        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/banking/transactions/");
+  const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/banking/transactions/");
         const data = await res.json();
         setTransactions(data.results || []);
       } finally {
@@ -48,7 +48,7 @@ export default function TransactionsPage() {
   async function handleDelete(id: number) {
     if (!confirm("Delete this transaction?")) return;
     try {
-      const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/banking/transactions/${id}/`, {
+  const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/banking/transactions/${id}/`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("accessToken") || ""}` },
       });

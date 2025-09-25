@@ -39,13 +39,13 @@ export default function ProformaInvoicesPage() {
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
 
-  const baseApiUrl = "https://bom-front-production.up.railway.app/api/proformainvoices/";
+  const baseApiUrl = "https://web-production-6baf3.up.railway.app/api/proformainvoices/";
 
   const deleteProforma = async (id: string) => {
   if (!confirm("Are you sure you want to delete this proforma invoice?")) return;
 
   try {
-    const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/proformainvoices/${id}/`, {
+    const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/proformainvoices/${id}/`, {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete proforma invoice");

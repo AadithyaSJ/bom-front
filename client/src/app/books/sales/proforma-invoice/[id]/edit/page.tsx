@@ -69,7 +69,7 @@ export default function EditProformaInvoice() {
   useEffect(() => {
     async function loadCustomers() {
       try {
-        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/customers/");
+        const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/customers/");
         if (!res.ok) throw new Error("Failed to fetch customers");
         const data = await res.json();
         setCustomers(data.results || []);
@@ -87,7 +87,7 @@ export default function EditProformaInvoice() {
   useEffect(() => {
     async function loadItems() {
       try {
-        const res = await fetchWithAuth("https://bom-front-production.up.railway.app/api/items/");
+        const res = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/items/");
         if (!res.ok) throw new Error("Failed to fetch items");
         const data = await res.json();
         setItemsList(data.results || []);
@@ -108,7 +108,7 @@ export default function EditProformaInvoice() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/proformainvoices/${id}/`);
+        const res = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/proformainvoices/${id}/`);
         if (!res.ok) throw new Error(`Failed to fetch invoice: ${res.status}`);
         const data = await res.json();
 
@@ -142,24 +142,32 @@ export default function EditProformaInvoice() {
         // Map item_details to proformaItems state, include name from itemsList
         if (Array.isArray(data.item_details) && data.item_details.length > 0) {
           setProformaItems(
-            data.item_details.map((item: any) => {
+            data.item_details.map((item: {
+              id?: string;
+              item_id?: number;
+              quantity?: number;
+              rate?: number;
+            }) => {
               const foundItem = itemsList.find((i) => i.id === item.item_id);
               return {
-                id: item.id || crypto.randomUUID(),
+                id: item.id?.toString() || crypto.randomUUID(),
                 itemId: item.item_id || null,
                 name: foundItem?.name || "",
                 qty: item.quantity || 1,
                 rate: Number(item.rate) || 0,
               };
             })
+
           );
         } else {
           setProformaItems([{ id: crypto.randomUUID(), itemId: null, name: "", qty: 1, rate: 0 }]);
         }
-      } catch (err: any) {
-        setError(err.message || "Failed to load invoice");
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Failed to load invoice");
+        }
       }
     }
     fetchInvoice();
@@ -253,7 +261,7 @@ export default function EditProformaInvoice() {
     console.log("Submitting payload:", payload);
     try {
       const res = await fetchWithAuth(
-        `https://bom-front-production.up.railway.app/api/proformainvoices/${id}/`,
+        `https://web-production-6baf3.up.railway.app/api/proformainvoices/${id}/`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

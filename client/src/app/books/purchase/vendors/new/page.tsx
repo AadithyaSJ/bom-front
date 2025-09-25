@@ -286,7 +286,7 @@ export default function NewVendorPage() {
 
 
     try {
-      const response = await fetchWithAuth("https://bom-front-production.up.railway.app/api/vendors/", {
+      const response = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/vendors/", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload),

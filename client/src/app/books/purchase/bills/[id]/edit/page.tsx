@@ -89,7 +89,7 @@ export default function BillEditPage() {
       setLoading(true);
       try {
         // Fetch vendors
-        const vendorsRes = await fetchWithAuth("https://bom-front-production.up.railway.app/api/vendors");
+        const vendorsRes = await fetchWithAuth("https://web-production-6baf3.up.railway.app/api/vendors");
         if (vendorsRes.ok) {
           const vendorsData = await vendorsRes.json();
           setVendors(vendorsData.results || []);
@@ -97,7 +97,7 @@ export default function BillEditPage() {
 
         if (billId) {
           // Fetch bill data
-          const billRes = await fetchWithAuth(`https://bom-front-production.up.railway.app/api/bills/${billId}`);
+          const billRes = await fetchWithAuth(`https://web-production-6baf3.up.railway.app/api/bills/${billId}`);
           if (billRes.ok) {
             const data = await billRes.json();
 
@@ -209,7 +209,7 @@ export default function BillEditPage() {
     };
 
     try {
-      const url = billId ? `https://bom-front-production.up.railway.app/api/bills/${billId}` : "https://bom-front-production.up.railway.app/api/bills";
+      const url = billId ? `https://web-production-6baf3.up.railway.app/api/bills/${billId}` : "https://web-production-6baf3.up.railway.app/api/bills";
       const method = billId ? "PUT" : "POST";
 
       const res = await fetchWithAuth(url, {
