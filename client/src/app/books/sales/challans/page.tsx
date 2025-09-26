@@ -176,7 +176,7 @@ export default function ChallanPage() {
         alert("Failed to update invoice status: " + JSON.stringify(err));
         return;
       }
-      setInvoices((curr) => curr.map((inv) => (inv.id === id ? { ...inv, status: newStatus } : inv)));
+      setInvoices((curr) => curr.map((inv) => (inv.id === Number(id) ? { ...inv, status: newStatus } : inv)));
       setEditingInvoiceStatusIds((curr) => {
         const copy = { ...curr };
         delete copy[id];
@@ -234,7 +234,7 @@ export default function ChallanPage() {
             ) : (
               challans.map((challan) => {
                 const editingChallan = challan.id in editingChallanStatusIds;
-                const relatedInvoice = invoices.find((inv) => inv.customer.id === challan.customer.id);
+                const relatedInvoice = invoices.find((inv) => inv.customer?.id === challan.customer.id);
                 const editingInvoice = relatedInvoice && relatedInvoice.id in editingInvoiceStatusIds;
 
                 return (
@@ -318,7 +318,7 @@ export default function ChallanPage() {
                                 </option>
                               ))}
                             </select>
-                            <button onClick={() => updateInvoiceStatus(relatedInvoice.id)} className="ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+                            <button onClick={() => updateInvoiceStatus(String(relatedInvoice.id))} className="ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
                               Save
                             </button>
                             <button
