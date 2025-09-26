@@ -112,24 +112,24 @@ export default function ItemsPage() {
               {items.map((item) => (
                 <tr key={item.id}
                   className={`cursor-pointer ${
-                    item.id % 2 === 0 ? "bg-green-50" : "bg-green-100"
+                    Number(item.id) % 2 === 0 ? "bg-green-50" : "bg-green-100"
                     } hover:bg-green-200`}
                   onClick={() => router.push(`/books/items/item/${item.id}`)} // 👈 Navigate to detail page
                   >
                   <td className="px-4 py-3 font-medium text-green-700">{item.name}</td>
-                  <td className="px-4 py-3">{item.purchase_description || "-"}</td>
+                  <td className="px-4 py-3">{item.purchasedescription || "-"}</td>
                   <td className="px-4 py-3">
-                    {item.purchase_cost_price != null
-                      ? `₹${Number(item.purchase_cost_price).toFixed(2)}`
+                    {item.purchasecostprice != null
+                      ? `₹${Number(item.purchasecostprice).toFixed(2)}`
                       : "-"}
                   </td>
                   <td className="px-4 py-3">
-                    {item.sales_selling_price != null ? `₹${Number(item.sales_selling_price).toFixed(2)}` : "-"}
+                    {item.salessellingprice != null ? `₹${Number(item.salessellingprice).toFixed(2)}` : "-"}
                   </td>
-                  <td className="px-4 py-3">{item.opening_stock ?? "-"}</td>
+                  <td className="px-4 py-3">{item.openingstock ?? "-"}</td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => handleDelete(Number(item.id))}
                       className="p-2 text-red-600 rounded hover:bg-red-100"
                       title="Delete item"
                     >

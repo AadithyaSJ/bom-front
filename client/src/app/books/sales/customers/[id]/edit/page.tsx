@@ -64,7 +64,7 @@ function cleanObject<T extends Record<string, string>>(obj: T): T {
   const copy = {} as T;
   Object.entries(obj).forEach(([k, v]) => {
     if (v !== "") {
-      copy[k as keyof T] = v;
+      copy[k as keyof T] = v as T[keyof T];
     }
   });
   return copy;

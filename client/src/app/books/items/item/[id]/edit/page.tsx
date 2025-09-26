@@ -138,8 +138,12 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <label className="block text-sm font-medium">Name</label>
     <input
       type="text"
-      value={item.name || ""}
-      onChange={(e) => setItem({ ...item, name: e.target.value })}
+      value={item?.name || ""}
+      onChange={(e) =>
+        setItem((prev) =>
+          prev ? { ...prev, name: e.target.value } : prev
+        )
+      }
       className="w-full border px-3 py-2 rounded"
     />
   </div>
@@ -148,8 +152,12 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
   <div>
   <label className="block text-sm font-medium">Unit</label>
   <select
-    value={item.unit || ""}
-    onChange={(e) => setItem({ ...item, unit: e.target.value })}
+    value={item?.unit || ""}
+    onChange={(e) =>
+      setItem((prev) =>
+        prev ? { ...prev, unit: e.target.value as Item["unit"] } : prev
+      )
+    }
     className="w-full border px-3 py-2 rounded"
   >
     <option value="">-- Select Unit --</option>
@@ -164,9 +172,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <label className="inline-flex items-center">
       <input
         type="checkbox"
-        checked={item.manage_sales_info || false}
+        checked={item?.manage_sales_info || false}
         onChange={(e) =>
-          setItem({ ...item, manage_sales_info: e.target.checked })
+          setItem((prev) =>
+            prev ? { ...prev, manage_sales_info: e.target.checked } : prev
+          )
         }
         className="mr-2"
       />
@@ -180,9 +190,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <input
       type="number"
       step="0.01"
-      value={item.sales_selling_price || ""}
+      value={item?.sales_selling_price || ""}
       onChange={(e) =>
-        setItem({ ...item, sales_selling_price: e.target.value })
+        setItem((prev) =>
+          prev ? { ...prev, sales_selling_price: e.target.value === "" ? null : Number(e.target.value) } : prev
+        )
       }
       className="w-full border px-3 py-2 rounded"
     />
@@ -193,8 +205,12 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
 <div>
   <label className="block text-sm font-medium">Sales Account</label>
   <select
-    value={item.sales_account || ""}
-    onChange={(e) => setItem({ ...item, sales_account: e.target.value })}
+    value={item?.sales_account || ""}
+    onChange={(e) =>
+      setItem((prev) =>
+        prev ? { ...prev, sales_account: e.target.value } : prev
+      )
+    }
     className="w-full border px-3 py-2 rounded"
   >
     <option value="">-- Select Sales Account --</option>
@@ -206,9 +222,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
   <div>
     <label className="block text-sm font-medium">Sales Description</label>
     <textarea
-      value={item.sales_description || ""}
+      value={item?.sales_description || ""}
       onChange={(e) =>
-        setItem({ ...item, sales_description: e.target.value })
+        setItem((prev) =>
+          prev ? { ...prev, sales_description: e.target.value } : prev
+        )
       }
       className="w-full border px-3 py-2 rounded"
     />
@@ -219,9 +237,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <label className="inline-flex items-center">
       <input
         type="checkbox"
-        checked={item.manage_purchase_info || false}
+        checked={item?.manage_purchase_info || false}
         onChange={(e) =>
-          setItem({ ...item, manage_purchase_info: e.target.checked })
+          setItem((prev) =>
+            prev ? { ...prev, manage_purchase_info: e.target.checked } : prev
+          )
         }
         className="mr-2"
       />
@@ -235,9 +255,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <input
       type="number"
       step="0.01"
-      value={item.purchase_cost_price || ""}
+      value={item?.purchase_cost_price || ""}
       onChange={(e) =>
-        setItem({ ...item, purchase_cost_price: e.target.value })
+        setItem((prev) =>
+          prev ? { ...prev, purchase_cost_price: e.target.value === "" ? null : Number(e.target.value) } : prev
+        )
       }
       className="w-full border px-3 py-2 rounded"
     />
@@ -247,8 +269,12 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
   <div>
   <label className="block text-sm font-medium">Purchase Account</label>
   <select
-    value={item.purchase_account || ""}
-    onChange={(e) => setItem({ ...item, purchase_account: e.target.value })}
+    value={item?.purchase_account || ""}
+    onChange={(e) =>
+      setItem((prev) =>
+        prev ? { ...prev, purchase_account: e.target.value } : prev
+      )
+    }
     className="w-full border px-3 py-2 rounded"
   >
     <option value="">-- Select Purchase Account --</option>
@@ -260,9 +286,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
   <div>
     <label className="block text-sm font-medium">Purchase Description</label>
     <textarea
-      value={item.purchase_description || ""}
+      value={item?.purchase_description || ""}
       onChange={(e) =>
-        setItem({ ...item, purchase_description: e.target.value })
+        setItem((prev) =>
+          prev ? { ...prev, purchase_description: e.target.value } : prev
+        )
       }
       className="w-full border px-3 py-2 rounded"
     />
@@ -272,9 +300,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
   <div>
           <label className="block text-sm font-medium">Preferred Vendor</label>
           <select
-            value={item.preferred_vendor || ""}
+            value={item?.preferred_vendor || ""}
             onChange={(e) =>
-              setItem({ ...item, preferred_vendor: Number(e.target.value) })
+              setItem((prev) =>
+                prev ? { ...prev, preferred_vendor: Number(e.target.value) } : prev
+              )
             }
             className="w-full border px-3 py-2 rounded"
           >
@@ -292,9 +322,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <label className="inline-flex items-center">
       <input
         type="checkbox"
-        checked={item.track_inventory || false}
+        checked={item?.track_inventory || false}
         onChange={(e) =>
-          setItem({ ...item, track_inventory: e.target.checked })
+          setItem((prev) =>
+            prev ? { ...prev, track_inventory: e.target.checked } : prev
+          )
         }
         className="mr-2"
       />
@@ -307,9 +339,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <label className="block text-sm font-medium">Inventory Account</label>
     <input
       type="text"
-      value={item.inventory_account || ""}
+      value={item?.inventory_account || ""}
       onChange={(e) =>
-        setItem({ ...item, inventory_account: e.target.value })
+        setItem((prev) =>
+          prev ? { ...prev, inventory_account: e.target.value } : prev
+        )
       }
       className="w-full border px-3 py-2 rounded"
     />
@@ -320,9 +354,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <label className="block text-sm font-medium">Inventory Valuation Method</label>
     <input
       type="text"
-      value={item.inventory_valuation_method || ""}
+      value={item?.inventory_valuation_method || ""}
       onChange={(e) =>
-        setItem({ ...item, inventory_valuation_method: e.target.value })
+        setItem((prev) =>
+          prev ? { ...prev, inventory_valuation_method: e.target.value } : prev
+        )
       }
       className="w-full border px-3 py-2 rounded"
     />
@@ -334,9 +370,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <input
       type="number"
       step="0.01"
-      value={item.opening_stock || ""}
+      value={item?.opening_stock || ""}
       onChange={(e) =>
-        setItem({ ...item, opening_stock: e.target.value })
+        setItem((prev) =>
+          prev ? { ...prev, opening_stock: e.target.value === "" ? null : Number(e.target.value) } : prev
+        )
       }
       className="w-full border px-3 py-2 rounded"
     />
@@ -348,9 +386,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <input
       type="number"
       step="0.01"
-      value={item.opening_stock_rate_per_unit || ""}
+      value={item?.opening_stock_rate_per_unit || ""}
       onChange={(e) =>
-        setItem({ ...item, opening_stock_rate_per_unit: e.target.value })
+        setItem((prev) =>
+          prev ? { ...prev, opening_stock_rate_per_unit: e.target.value === "" ? null : Number(e.target.value) } : prev
+        )
       }
       className="w-full border px-3 py-2 rounded"
     />
@@ -362,9 +402,11 @@ const [vendors, setVendors] = useState<Vendor[]>([]);
     <input
       type="number"
       step="0.01"
-      value={item.reorder_point || ""}
+      value={item?.reorder_point || ""}
       onChange={(e) =>
-        setItem({ ...item, reorder_point: e.target.value })
+        setItem((prev) =>
+          prev ? { ...prev, reorder_point: e.target.value === "" ? null : Number(e.target.value) } : prev
+        )
       }
       className="w-full border px-3 py-2 rounded"
     />
