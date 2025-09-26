@@ -18,7 +18,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      await fetch("http://localhost:8000/api/auth/logout/", {
+      await fetch("https://web-production-6baf3.up.railway.app/api/auth/logout/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

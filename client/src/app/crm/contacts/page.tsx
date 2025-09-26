@@ -13,6 +13,14 @@ interface Contact {
   owner: string;
 }
 
+interface ContactFormData {
+  name?: string;
+  company?: string;
+  email?: string;
+  phone?: string;
+  owner?: string;
+}
+
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState([
@@ -27,8 +35,16 @@ export default function ContactsPage() {
 
   const [isModalOpen, setModalOpen] = useState(false);
 
-  const handleAddContact = (contact: Contact) => {
-    setContacts([...contacts, contact]);
+  // Assuming ContactFormData has fields: company, email, and any others from the form
+  const handleAddContact = (form: ContactFormData) => {
+    const newContact: Contact = {
+      name: form.name ?? "", // or set default/required
+      company: form.company ?? "",
+      email: form.email ?? "",
+      phone: form.phone ?? "",
+      owner: form.owner ?? "",
+    };
+    setContacts([...contacts, newContact]);
     setModalOpen(false);
   };
 
