@@ -13,6 +13,8 @@ import { saveAs } from "file-saver";
 import Link from "next/link";
 
 interface Vendor {
+  last_name: string;
+  first_name: string;
   id: number;
   name: string;
   display_name: string;
