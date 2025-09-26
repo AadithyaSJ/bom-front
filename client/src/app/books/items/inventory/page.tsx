@@ -6,6 +6,14 @@ import Link from "next/link";
 interface InventoryAdjustment {
   item: number | string; // Assuming your API returns the item ID here
   adjustmentnumber: string;
+  description?: string;
+  status: string;
+  referenceNumber?: string;
+  type: string;
+  createdBy: string;
+  createdTime: string;   // ISO datetime string
+  lastModifiedBy: string;
+  lastModifiedTime: string; // ISO datetime string
   date: string;          // ISO date string e.g. "2025-09-21"
   quantity: number;
   reason?: string;
