@@ -356,7 +356,7 @@ export default function NewItemPage() {
           {trackInventory && (
             <>
               <p className="mb-4 text-sm text-gray-500">
-                You cannot enable/disable inventory tracking once you've created transactions for this item
+                You cannot enable/disable inventory tracking once you have created transactions for this item
               </p>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

@@ -1,8 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
+type ContactFormData = {
+  firstName: string;
+  lastName: string;
+  title: string;
+  email: string;
+  company: string;
+  mobile: string;
+  description: string;
+  mailingStreet: string;
+  mailingCity: string;
+  mailingState: string;
+  mailingCountry: string;
+  mailingZip: string;
+  [key: string]: string; // Add index signature
+};
 
-export default function AddContactModal({ onClose, onSave }: any) {
+type AddContactModalProps = {
+  onClose: () => void;
+  onSave: (form: ContactFormData) => void;
+};
+
+
+
+export default function AddContactModal({ onClose, onSave }: AddContactModalProps) {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -18,7 +40,7 @@ export default function AddContactModal({ onClose, onSave }: any) {
     mailingZip: "",
   });
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
@@ -62,7 +84,7 @@ export default function AddContactModal({ onClose, onSave }: any) {
                   <input
                     type="text"
                     name={name}
-                    value={(formData as any)[name]}
+                    value={(formData as ContactFormData)[name]}
                     onChange={handleChange}
                     className="flex-1 border border-gray-300 rounded-md px-3 py-2"
                   />
@@ -87,7 +109,7 @@ export default function AddContactModal({ onClose, onSave }: any) {
                   <input
                     type="text"
                     name={name}
-                    value={(formData as any)[name]}
+                    value={(formData as ContactFormData)[name]}
                     onChange={handleChange}
                     className="flex-1 border border-gray-300 rounded-md px-3 py-2"
                   />
