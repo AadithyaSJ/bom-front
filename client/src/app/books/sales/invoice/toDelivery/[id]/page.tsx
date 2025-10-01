@@ -9,6 +9,7 @@ import { generatePDF } from "@/lib/pdf/pdfgenerator";
 type CustomerType = {
   id: number;
   display_name: string;
+  
 };
 
 type Customer = {
