@@ -101,7 +101,7 @@ export default function InvoiceDetailPage() {
           `https://web-production-6baf3.up.railway.app/api/invoices/${id}/`
         );
         if (!res.ok) throw new Error("Failed to fetch invoice data");
-        const data: Invoice = await res.json();
+        const data: Invoice = await res.json();        
         setInvoice(data);
       } catch (err) {
         setError("Failed to load invoice data");

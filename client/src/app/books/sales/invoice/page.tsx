@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchWithAuth } from "@/auth/tokenservice";
 import { FaTrash } from "react-icons/fa";
+import { LuMerge } from "react-icons/lu";
+import { useRouter } from "next/navigation";
 
 type CustomerType = {
   id: number;
@@ -34,6 +36,7 @@ export default function InvoiceListPage() {
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
   const [editingStatusIds, setEditingStatusIds] = useState<Record<string, InvoiceStatus>>({});
+  const router = useRouter();
   
 
   const baseApiUrl = "https://web-production-6baf3.up.railway.app/api/invoices/";
@@ -260,6 +263,13 @@ export default function InvoiceListPage() {
                             title="Delete Invoice"
                           >
                             <FaTrash />
+                          </button>
+                          <button
+                            onClick={() => router.push(`/books/sales/invoice/toDelivery/${inv.id}`)}
+                            className="px-3 py-1 border rounded text-purple-600 hover:bg-purple-100"
+                            title="Convert to Proforma"
+                          >
+                            <LuMerge />
                           </button>
                         </>
                       )}

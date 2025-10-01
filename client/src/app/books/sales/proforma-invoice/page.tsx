@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { fetchWithAuth } from "@/auth/tokenservice";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { FaTrash } from "react-icons/fa"; // import at top
+import { LuMerge } from "react-icons/lu";
+import { useRouter } from "next/navigation";
 
 type CustomerType = {
   id: number;
@@ -40,6 +42,7 @@ export default function ProformaInvoicesPage() {
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
   const [editingStatusIds, setEditingStatusIds] = useState<Record<string, ProformaStatus>>({});
   const statusOptions: ProformaStatus[] = ["draft", "sent", "accepted", "cancelled"];
+  const router = useRouter();
 
 
   const baseApiUrl = "https://web-production-6baf3.up.railway.app/api/proformainvoices/";
@@ -258,6 +261,13 @@ export default function ProformaInvoicesPage() {
                   title="Delete proforma invoice"
                 >
                   <FaTrash />
+                </button>
+                <button
+                  onClick={() => router.push(`/books/sales/proforma-invoice/toInvoice/${inv.id}`)}
+                  className="px-3 py-1 border rounded text-purple-600 hover:bg-purple-100"
+                  title="Convert to Proforma"
+                >
+                  <LuMerge />
                 </button>
               </>
             )}
